@@ -1,0 +1,15 @@
+# Godot 4 project files
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Exported builds
+build/
+exports/
+*.pck
+*.zip
+
+# OS / editor noise
+.DS_Store
+*.swp

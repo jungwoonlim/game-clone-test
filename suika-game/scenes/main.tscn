@@ -1,0 +1,138 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_game"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(20, 1240)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(460, 20)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_jar"]
+friction = 0.6
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_game")
+
+[node name="Jar" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 1
+physics_material_override = SubResource("PhysicsMaterial_jar")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Jar"]
+position = Vector2(50, 300)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWall" type="CollisionShape2D" parent="Jar"]
+position = Vector2(490, 300)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="Floor" type="CollisionShape2D" parent="Jar"]
+position = Vector2(270, 910)
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="Fruits" type="Node2D" parent="."]
+
+[node name="Dropper" type="Node2D" parent="."]
+position = Vector2(270, 152)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ScoreLabel" type="Label" parent="UI"]
+offset_left = 24.0
+offset_top = 10.0
+offset_right = 200.0
+offset_bottom = 34.0
+theme_override_colors/font_color = Color(0.42, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 18
+text = "SCORE"
+
+[node name="ScoreValue" type="Label" parent="UI"]
+offset_left = 24.0
+offset_top = 30.0
+offset_right = 260.0
+offset_bottom = 84.0
+theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
+theme_override_font_sizes/font_size = 42
+text = "0"
+
+[node name="BestLabel" type="Label" parent="UI"]
+offset_left = 250.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 34.0
+theme_override_colors/font_color = Color(0.42, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 18
+text = "BEST"
+
+[node name="BestValue" type="Label" parent="UI"]
+offset_left = 250.0
+offset_top = 34.0
+offset_right = 420.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(0.42, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 26
+text = "0"
+
+[node name="NextLabel" type="Label" parent="UI"]
+offset_left = 420.0
+offset_top = 14.0
+offset_right = 520.0
+offset_bottom = 36.0
+theme_override_colors/font_color = Color(0.42, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 16
+text = "NEXT"
+horizontal_alignment = 1
+
+[node name="HintLabel" type="Label" parent="UI"]
+offset_top = 922.0
+offset_right = 540.0
+offset_bottom = 950.0
+theme_override_colors/font_color = Color(0.5, 0.44, 0.36, 1)
+theme_override_font_sizes/font_size = 15
+text = "Move: mouse / arrow keys     Drop: click / space"
+horizontal_alignment = 1
+
+[node name="GameOver" type="Control" parent="UI"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="UI/GameOver"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.06, 0.05, 0.62)
+
+[node name="Title" type="Label" parent="UI/GameOver"]
+offset_top = 330.0
+offset_right = 540.0
+offset_bottom = 400.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 52
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="FinalScore" type="Label" parent="UI/GameOver"]
+offset_top = 420.0
+offset_right = 540.0
+offset_bottom = 520.0
+theme_override_colors/font_color = Color(1, 0.92, 0.78, 1)
+theme_override_font_sizes/font_size = 28
+text = "SCORE  0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Restart" type="Label" parent="UI/GameOver"]
+offset_top = 560.0
+offset_right = 540.0
+offset_bottom = 596.0
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+text = "Click or press SPACE to play again"
+horizontal_alignment = 1
