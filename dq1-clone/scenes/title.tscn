@@ -1,0 +1,80 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/title.gd" id="1_title"]
+[ext_resource type="Script" path="res://view_2d/ui/title_backdrop.gd" id="2_back"]
+[ext_resource type="Script" path="res://view_2d/ui/command_window.gd" id="3_cmd"]
+[ext_resource type="Script" path="res://view_2d/ui/settings_window.gd" id="4_set"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 26
+font_color = Color(0.96, 0.9, 0.62, 1)
+outline_size = 4
+outline_color = Color(0.04, 0.04, 0.08, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_small"]
+font_size = 9
+font_color = Color(0.78, 0.8, 0.86, 1)
+outline_size = 3
+outline_color = Color(0.04, 0.04, 0.08, 1)
+
+[node name="Title" type="Control"]
+script = ExtResource("1_title")
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backdrop" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_back")
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_top = 54.0
+offset_right = 512.0
+offset_bottom = 96.0
+label_settings = SubResource("LabelSettings_title")
+text = "QUEST OF THE LIGHT"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="."]
+offset_top = 100.0
+offset_right = 512.0
+offset_bottom = 116.0
+label_settings = SubResource("LabelSettings_small")
+text = "a Dragon Quest 1 system clone"
+horizontal_alignment = 1
+
+[node name="SaveNote" type="Label" parent="."]
+offset_top = 300.0
+offset_right = 512.0
+offset_bottom = 316.0
+label_settings = SubResource("LabelSettings_small")
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="."]
+offset_top = 352.0
+offset_right = 512.0
+offset_bottom = 368.0
+label_settings = SubResource("LabelSettings_small")
+text = "ARROWS  move        SPACE  confirm        X  cancel"
+horizontal_alignment = 1
+
+[node name="Menu" type="Control" parent="."]
+offset_left = 198.0
+offset_top = 168.0
+offset_right = 318.0
+offset_bottom = 232.0
+mouse_filter = 2
+script = ExtResource("3_cmd")
+
+[node name="Settings" type="Control" parent="."]
+offset_left = 171.0
+offset_top = 168.0
+offset_right = 341.0
+offset_bottom = 232.0
+mouse_filter = 2
+script = ExtResource("4_set")

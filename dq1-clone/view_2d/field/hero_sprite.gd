@@ -1,13 +1,23 @@
-## Placeholder hero, drawn in code so the project needs no character art yet.
-## Replaced by a Sprite2D + AnimatedSprite2D in M6.
+## The party sprite, read out of the generated sheet.
+##
+## The sheet is 2 frames wide by 4 directions tall; facing up deliberately has
+## no face, which is how direction reads at sixteen pixels.
 extends Node2D
 
-const BODY := Color("3f6fd0")
-const TRIM := Color("e8d24a")
-const SKIN := Color("f0c8a0")
-const OUTLINE := Color("1a1a22")
+const SHEET := "res://assets/art/hero.png"
+const SIZE := 16
+
+const ROWS := {
+	Vector2i.DOWN: 0,
+	Vector2i.UP: 1,
+	Vector2i.LEFT: 2,
+	Vector2i.RIGHT: 3,
+}
 
 var facing: Vector2i = Vector2i.DOWN
+
+var _texture: Texture2D = load(SHEET)
+var _frame := 0
 
 
 func set_facing(direction: Vector2i) -> void:
@@ -16,20 +26,16 @@ func set_facing(direction: Vector2i) -> void:
 		queue_redraw()
 
 
-func _draw() -> void:
-	# Drawn around the tile centre, 16x16 tiles.
-	draw_rect(Rect2(-5, -7, 10, 14), OUTLINE)
-	draw_rect(Rect2(-4, -6, 8, 5), SKIN)
-	draw_rect(Rect2(-4, -1, 8, 8), BODY)
-	draw_rect(Rect2(-4, 5, 8, 2), TRIM)
+## Called once per step so the legs alternate.
+func advance_step() -> void:
+	_frame = 1 - _frame
+	queue_redraw()
 
-	# Eyes, so the facing direction reads at a glance.
-	if facing == Vector2i.DOWN:
-		draw_rect(Rect2(-3, -5, 2, 2), OUTLINE)
-		draw_rect(Rect2(1, -5, 2, 2), OUTLINE)
-	elif facing == Vector2i.UP:
-		draw_rect(Rect2(-4, -6, 8, 5), Color("c8a070"))
-	elif facing == Vector2i.LEFT:
-		draw_rect(Rect2(-4, -5, 2, 2), OUTLINE)
-	else:
-		draw_rect(Rect2(2, -5, 2, 2), OUTLINE)
+
+func _draw() -> void:
+	if _texture == null:
+		return
+	var row: int = ROWS.get(facing, 0)
+	draw_texture_rect_region(_texture,
+			Rect2(-SIZE / 2.0, -SIZE / 2.0 - 2.0, SIZE, SIZE),
+			Rect2(_frame * SIZE, row * SIZE, SIZE, SIZE))

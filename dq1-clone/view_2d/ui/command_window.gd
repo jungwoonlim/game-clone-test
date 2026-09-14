@@ -84,9 +84,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_move(1)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_Z:
 			if _is_enabled(_index):
+				sfx("sfx_confirm")
 				chosen.emit(_index)
 		KEY_ESCAPE, KEY_X, KEY_BACKSPACE:
 			if _cancellable:
+				sfx("sfx_cancel")
 				chosen.emit(-1)
 		_:
 			handled = false
@@ -103,6 +105,8 @@ func _move(step: int) -> void:
 		next = wrapi(next + step, 0, _labels.size())
 		if _is_enabled(next):
 			break
+	if next != _index:
+		sfx("sfx_cursor")
 	_index = next
 	queue_redraw()
 

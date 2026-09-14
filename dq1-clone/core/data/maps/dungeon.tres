@@ -9,7 +9,7 @@
 script = ExtResource("1_uxnpn")
 cell = Vector2i(6, 18)
 item_id = &""
-gold = 120
+gold = 200
 
 [sub_resource type="Resource" id="Resource_d6ff1"]
 script = ExtResource("4_nuw1g")

@@ -144,15 +144,15 @@ func _build_items() -> Array[ItemData]:
 	# id, name, kind, buy, atk, def, hurt_reduction, blocks_terrain, effect, power
 	var rows := [
 		["w_club", "Club", "weapon", 10, 2, 0, 0.0, false, "", 0],
-		["w_sword", "Sword", "weapon", 60, 7, 0, 0.0, false, "", 0],
-		["w_blade", "Broad Blade", "weapon", 180, 15, 0, 0.0, false, "", 0],
+		["w_sword", "Sword", "weapon", 90, 7, 0, 0.0, false, "", 0],
+		["w_blade", "Broad Blade", "weapon", 350, 15, 0, 0.0, false, "", 0],
 		["a_clothes", "Clothes", "armor", 20, 0, 2, 0.0, false, "", 0],
-		["a_leather", "Leather Armor", "armor", 70, 0, 4, 0.0, false, "", 0],
-		["a_plate", "Plate Armor", "armor", 300, 0, 10, 0.333, true, "", 0],
-		["s_small", "Small Shield", "shield", 90, 0, 4, 0.0, false, "", 0],
-		["s_large", "Large Shield", "shield", 800, 0, 10, 0.0, false, "", 0],
+		["a_leather", "Leather Armor", "armor", 110, 0, 4, 0.0, false, "", 0],
+		["a_plate", "Plate Armor", "armor", 550, 0, 10, 0.333, true, "", 0],
+		["s_small", "Small Shield", "shield", 140, 0, 4, 0.0, false, "", 0],
+		["s_large", "Large Shield", "shield", 1200, 0, 10, 0.0, false, "", 0],
 		["herb", "Herb", "consumable", 24, 0, 0, 0.0, false, "heal_hp", 30],
-		["torch", "Torch", "consumable", 8, 0, 0, 0.0, false, "light", 3],
+		["torch", "Torch", "consumable", 10, 0, 0, 0.0, false, "light", 3],
 	]
 
 	var out: Array[ItemData] = []
@@ -197,13 +197,13 @@ func _build_monsters() -> Array[MonsterData]:
 	# battles to reach the boss — the curve assumes ~40 monsters across many
 	# regions, and this slice has 8.
 	var rows := [
-		["m_slime", "Slime", 3, 0, 5, 3, 2, 2, 3, 0, 0],
-		["m_slime_red", "Red Slime", 4, 0, 7, 3, 4, 3, 5, 0, 0],
-		["m_drakee", "Drakee", 6, 0, 9, 6, 7, 5, 7, 0, 0],
-		["m_ghost", "Ghost", 7, 0, 11, 8, 12, 8, 12, 32, 0],
-		["m_magician", "Magician", 13, 30, 11, 12, 20, 12, 18, 0, 0],
-		["m_scorpion", "Scorpion", 20, 20, 18, 16, 35, 16, 24, 64, 32],
-		["m_wraith", "Wraith", 35, 40, 28, 22, 70, 34, 48, 96, 64],
+		["m_slime", "Slime", 3, 0, 5, 3, 2, 1, 2, 0, 0],
+		["m_slime_red", "Red Slime", 4, 0, 7, 3, 4, 2, 3, 0, 0],
+		["m_drakee", "Drakee", 6, 0, 9, 6, 7, 3, 5, 0, 0],
+		["m_ghost", "Ghost", 7, 0, 11, 8, 12, 5, 8, 32, 0],
+		["m_magician", "Magician", 13, 30, 11, 12, 20, 8, 12, 0, 0],
+		["m_scorpion", "Scorpion", 20, 20, 18, 16, 35, 10, 15, 64, 32],
+		["m_wraith", "Wraith", 35, 40, 28, 22, 70, 21, 30, 96, 64],
 		["m_dragonlord", "Dragonlord", 45, 40, 34, 34, 0, 0, 0, 255, 255],
 		["m_dragonlord_true", "Dragonlord", 65, 60, 44, 40, 0, 0, 0, 255, 255],
 	]
@@ -557,7 +557,7 @@ func _build_dungeon() -> MapData:
 	map.warps = warps
 
 	var chests: Array[ChestPlacement] = []
-	chests.append(_chest(Vector2i(6, 18), "", 120))
+	chests.append(_chest(Vector2i(6, 18), "", 200))
 	map.chests = chests
 	return map
 
@@ -596,7 +596,7 @@ func _build_dungeon_b2() -> MapData:
 
 	var chests: Array[ChestPlacement] = []
 	chests.append(_chest(Vector2i(21, 5), "s_small", 0))
-	chests.append(_chest(Vector2i(25, 5), "", 450))
+	chests.append(_chest(Vector2i(25, 5), "", 700))
 	map.chests = chests
 
 	map.boss_cell = Vector2i(23, 16)

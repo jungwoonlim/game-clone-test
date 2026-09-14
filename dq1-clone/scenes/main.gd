@@ -33,6 +33,7 @@ var _monster_name := ""
 var _monster_max_hp := 1
 var _monster_hp := 0
 var _awaiting_key := false
+var _booted := false
 
 
 func _ready() -> void:
@@ -47,9 +48,64 @@ func _ready() -> void:
 	_session.world.terrain_damaged.connect(_on_terrain_damaged)
 
 	_battle.visible = false
+	if Boot.continue_from_save and _session.has_save():
+		_session.load_game()
+	Boot.continue_from_save = false
+
 	_on_map_changed(_session.world.map.id, _session.world.cell)
-	_message.push("Arrow keys to walk.")
+	_booted = true
 	_refresh_status()
+	_intro()
+
+
+## Opening lines. Written so a first-time player knows where to go without
+## being told anything outside the game.
+func _intro() -> void:
+	_mode = Mode.BUSY
+	if not _session.has_flag(&"hint_start"):
+		_session.set_flag(&"hint_start")
+		await _message.play("Thy quest begins in the castle town.")
+		await _message.play("Speak with the King upon the throne.")
+	await _message.play("ARROWS walk.   SPACE opens the menu.")
+	_mode = Mode.FIELD
+
+
+func _sfx(name: String) -> void:
+	if not is_inside_tree():
+		return
+	var director := get_node_or_null("/root/AudioDirector")
+	if director != null:
+		director.sfx(name)
+
+
+func _bgm(name: String) -> void:
+	if not is_inside_tree():
+		return
+	var director := get_node_or_null("/root/AudioDirector")
+	if director != null:
+		director.play_bgm(name)
+
+
+## Derived from the map rather than a lookup table, so a new map gets sensible
+## music without anyone remembering to register it.
+func _map_bgm() -> String:
+	var map := _session.world.map
+	if map == null:
+		return "bgm_town"
+	if map.is_dungeon:
+		return "bgm_dungeon"
+	if map.encounter_rate <= 0:
+		return "bgm_town"
+	return "bgm_field"
+
+
+## The one line that tells a new player what to do next.
+func _quest_line() -> String:
+	if not _session.has_flag(&"heard_quest"):
+		return "Speak with the King"
+	if not _session.has_flag(&"dragonlord_defeated"):
+		return "Enter the cave, east"
+	return "Return to the castle"
 
 
 func _process(_delta: float) -> void:
@@ -67,6 +123,8 @@ func _step(direction: Vector2i) -> void:
 	if _session.try_move(direction):
 		_field.walk_hero(_session.world.cell, direction)
 		_refresh_sight()
+	else:
+		_sfx("sfx_step_blocked")
 	_refresh_status()
 
 
@@ -132,6 +190,7 @@ func _do_talk() -> void:
 func _do_status() -> void:
 	var hero := _session.hero
 	_detail.show_rows([
+		["QUEST", _quest_line()],
 		["LEVEL", str(hero.level)],
 		["EXP", str(hero.total_exp)],
 		["NEXT", _exp_to_next_text()],
@@ -242,6 +301,7 @@ func _do_inn(npc: NpcPlacement) -> void:
 
 func _do_king() -> void:
 	if _session.save_game() == OK:
+		_sfx("sfx_confirm")
 		await _message.play("Thy deeds are recorded.")
 	else:
 		await _message.play("The scribe has lost his quill.")
@@ -331,6 +391,7 @@ func _do_take() -> void:
 
 	# The lid is part of the tilemap, so an opened chest has to be repainted.
 	_field.set_cell_terrain(_session.world.cell, Terrain.Type.FLOOR)
+	_sfx("sfx_chest")
 	if int(result["gold"]) > 0:
 		await _message.play("%d gold!" % result["gold"])
 	if StringName(result["item"]) != &"":
@@ -378,6 +439,8 @@ func _run_battle(monster_id: StringName) -> void:
 
 	_mode = Mode.BUSY
 	var is_boss_fight := data.is_boss
+	_sfx("sfx_boss" if is_boss_fight else "sfx_encounter")
+	_bgm("bgm_boss" if is_boss_fight else "bgm_battle")
 	_monster_name = data.display_name
 	_monster_max_hp = data.max_hp
 	_monster_hp = data.max_hp
@@ -405,6 +468,10 @@ func _run_battle(monster_id: StringName) -> void:
 
 	_battle.visible = false
 	_message.clear()
+	_bgm(_map_bgm())
+	if _session.hero.is_alive() \
+			and float(_session.hero.hp) / float(maxi(_session.hero.max_hp, 1)) < 0.25:
+		await _message.play("Thou art gravely wounded. Seek an inn.")
 	_mode = Mode.FIELD
 
 
@@ -479,16 +546,34 @@ func _play(events: Array[BattleEvent]) -> void:
 
 func _apply_effect(event: BattleEvent) -> void:
 	match event.kind:
+		BattleEvent.Kind.ATTACK:
+			_sfx("sfx_attack")
+		BattleEvent.Kind.CRITICAL:
+			_sfx("sfx_critical")
+		BattleEvent.Kind.SPELL_CAST:
+			_sfx("sfx_spell")
+		BattleEvent.Kind.HEAL:
+			_sfx("sfx_heal")
+		BattleEvent.Kind.LEVEL_UP:
+			_sfx("sfx_level_up")
+		BattleEvent.Kind.GOLD_GAINED:
+			_sfx("sfx_gold")
+		BattleEvent.Kind.MONSTER_DEFEATED:
+			_sfx("sfx_defeat_monster")
+		BattleEvent.Kind.HERO_DEFEATED:
+			_sfx("sfx_death")
 		BattleEvent.Kind.DAMAGE:
 			if event.by_hero:
 				_monster_hp = maxi(0, _monster_hp - event.amount)
 				_portrait.play_hit()
 			else:
+				_sfx("sfx_hurt")
 				_shake_screen()
 		BattleEvent.Kind.HEAL:
 			if not event.by_hero:
 				_monster_hp = mini(_monster_max_hp, _monster_hp + event.amount)
 		BattleEvent.Kind.MONSTER_TRANSFORMED:
+			_sfx("sfx_boss")
 			_adopt_current_monster()
 		BattleEvent.Kind.MONSTER_DEFEATED:
 			_portrait.play_defeat()
@@ -517,6 +602,8 @@ func _shake_screen() -> void:
 func _play_victory() -> void:
 	_battle.visible = false
 	_message.clear()
+	_bgm("bgm_town")
+	_sfx("sfx_victory")
 	await _message.play("The Dragonlord is no more.")
 	await _message.play("The Light returns to Alefgard.")
 	await _message.play("Thy quest is at an end.")
@@ -567,6 +654,20 @@ func _on_map_changed(map_id: StringName, cell: Vector2i) -> void:
 	_refresh_sight()
 	_place.text = map.display_name
 	_message.push("- %s -" % map.display_name)
+	if _booted:
+		_sfx("sfx_stairs")
+	_bgm(_map_bgm())
+	_first_visit_hints(map)
+
+
+## Said once, then remembered in the save so it never nags.
+func _first_visit_hints(map: MapData) -> void:
+	if map.id == &"field" and not _session.has_flag(&"hint_field"):
+		_session.set_flag(&"hint_field")
+		_message.push("The cave lies east, beyond the swamp.")
+	elif map.is_dungeon and not _session.has_flag(&"hint_dungeon"):
+		_session.set_flag(&"hint_dungeon")
+		_message.push("It is dark. A torch would widen thy sight.")
 
 
 func _on_terrain_damaged(amount: int) -> void:

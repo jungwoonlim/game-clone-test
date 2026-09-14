@@ -64,6 +64,9 @@ func play(text: String) -> void:
 		elapsed += get_process_delta_time()
 		var count := mini(text.length(), int(elapsed * CHARS_PER_SECOND))
 		if count != _partial.length():
+			# One blip every few glyphs; per-character would be a buzz.
+			if count / 3 != _partial.length() / 3:
+				sfx("sfx_text")
 			_partial = text.substr(0, count)
 			queue_redraw()
 

@@ -7,9 +7,14 @@ config_version=5
 
 config/name="DQ1 Clone"
 config/description="Dragon Quest 1 system clone. Logic in core/ is renderer-free."
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[autoload]
+
+AudioDirector="*res://view_2d/audio/audio_director.gd"
+GameSettings="*res://view_2d/settings.gd"
 
 [display]
 

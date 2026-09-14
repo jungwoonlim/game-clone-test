@@ -18,6 +18,15 @@ func _draw() -> void:
 	draw_rect(rect.grow(-1.0), BORDER, false, 2.0)
 
 
+## Every window can make a noise; the director is absent in some tool runs.
+func sfx(name: String) -> void:
+	if not is_inside_tree():
+		return
+	var director := get_node_or_null("/root/AudioDirector")
+	if director != null:
+		director.sfx(name)
+
+
 func font() -> Font:
 	return ThemeDB.fallback_font
 

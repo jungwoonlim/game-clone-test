@@ -17,54 +17,43 @@ RPG 작업량의 대부분(스탯, 전투, 성장, 인벤토리, 대화, 세이�
 
 ```
 dq1-clone/
-├── project.godot
+├── project.godot              main scene = scenes/title.tscn, 2 autoloads
 ├── docs/
+├── assets/                    ← 전부 tools/가 생성 (docs/08 참조)
+│   ├── art/                   monsters.png, hero.png, npcs.png
+│   └── audio/                 sfx_*.tres (19), bgm_*.tres (5)
+│
 ├── core/                      ← 렌더링 의존성 0
 │   ├── rng.gd                 ★ 시드 주입형 난수. 전역 randi() 금지
 │   ├── game_session.gd        ★ core의 유일한 진입점 (뷰와 툴이 공유)
 │   ├── data/                  Resource 정의 + .tres 데이터
-│   │   ├── game_database.gd   전체 인덱스 (database.tres 하나로 로드)
-│   │   ├── monster_data / monster_action / spell_data / item_data
-│   │   ├── map_data / warp_point / npc_placement / chest_placement
-│   │   ├── dialogue_entry / shop_data / encounter_table / level_curve
-│   │   └── monsters/ spells/ items/ maps/ encounters/ shops/   (.tres)
-│   ├── battle/
-│   │   ├── battle_state.gd    전투 상태머신 + 보스 2페이즈 변신
-│   │   ├── battle_event.gd    턴 결과 이벤트
-│   │   ├── formulas.gd        ★ 모든 전투 공식이 여기에만 존재
-│   │   └── actor.gd           전투 참가자 (용사/몬스터 공통)
-│   ├── party/
-│   │   ├── hero.gd            스탯, 장비 슬롯, 소지품
-│   │   └── progression.gd     EXP → 레벨 → 주문 습득, 사망 처리
-│   ├── world/
-│   │   ├── world_state.gd     좌표·이동·워프·보스 트리거·조명 감소
-│   │   ├── terrain.gd         지형 규칙 (통행/조우율/데미지)
-│   │   └── encounter.gd       인카운터 추첨, Repel
-│   ├── town/services.gd       구입·판매·장비·여관·도구 사용
+│   ├── battle/                상태머신 / 이벤트 / formulas / actor
+│   ├── party/                 hero / progression
+│   ├── world/                 world_state / terrain / encounter
+│   ├── town/services.gd       구입·판매·장비·여관·도구
 │   └── save/save_game.gd      ConfigFile 직렬화 (core 상태만)
 │
 ├── view_2d/                   ← 나중에 view_3d/ 로 교체되는 층
-│   ├── field/
-│   │   ├── field_view.gd      TileMapLayer, 카메라, 시야
-│   │   ├── hero_sprite.gd / npc_layer.gd / darkness.gd
-│   │   └── terrain_tiles.png + terrain_tileset.tres
-│   └── ui/
-│       ├── dq_window.gd       공통 창 프레임
-│       ├── message_window.gd  타자기 출력
-│       ├── command_window.gd  await 기반 메뉴 (전투/필드/상점 공용)
-│       ├── status_window.gd / detail_window.gd / monster_sprite.gd
-│       └── battle_text.gd     이벤트 → 문장 (모든 문구가 여기 모임)
+│   ├── boot.gd                타이틀 → 게임 인계 (static var)
+│   ├── settings.gd            [autoload] 볼륨·창모드 영속화
+│   ├── audio/audio_director.gd [autoload] 버스 생성, SFX 풀, BGM
+│   ├── field/                 field_view / hero / npc_layer / darkness / 타일셋
+│   └── ui/                    dq_window 기반 창 키트 + battle_text
 │
 ├── scenes/
+│   ├── title.tscn / title.gd  타이틀 · 설정
 │   └── main.tscn / main.gd    core와 view를 조립하는 유일한 지점
 │
 └── tools/                     전부 헤드리스
-    ├── build_tiles.gd         플레이스홀더 타일 아틀라스 생성
+    ├── build_tiles.gd         지형 아틀라스 생성
+    ├── build_sprites.gd       몬스터·캐릭터 스프라이트 생성
+    ├── build_audio.gd         효과음·BGM 합성
     ├── build_data.gd          .tres 데이터 + TileSet 시딩
     ├── validate_data.gd       데이터 정합성 (649 checks)
-    ├── test_core.gd           core 동작 테스트 (223 checks)
+    ├── test_core.gd           core 동작 (223 checks)
+    ├── test_presentation.gd   에셋·설정·타이틀 (220 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
-    └── smoke_view.gd          core↔view 배선 + 전체 플레이스루 (16 checks)
+    └── smoke_view.gd          전체 플레이스루 (16 checks)
 ```
 
 ## 신호 흐름
@@ -108,8 +97,9 @@ var events := battle.resolve_turn(PlayerCommand.ATTACK)
 ```bash
 godot --headless --path . --script res://tools/validate_data.gd
 godot --headless --path . --script res://tools/test_core.gd
-godot --headless --path . --script res://tools/simulate_balance.gd
+godot --headless --path . --script res://tools/test_presentation.gd
 godot --headless --path . --script res://tools/smoke_view.gd
+godot --headless --path . --script res://tools/simulate_balance.gd
 ```
 
 ### 1. 데이터 정합성 (`validate_data.gd`)

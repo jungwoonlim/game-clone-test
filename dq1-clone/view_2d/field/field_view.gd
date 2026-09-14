@@ -42,6 +42,7 @@ func snap_hero(cell: Vector2i) -> void:
 func walk_hero(cell: Vector2i, facing: Vector2i) -> void:
 	_target_position = _cell_to_position(cell)
 	_hero.set_facing(facing)
+	_hero.advance_step()
 
 
 func face_hero(facing: Vector2i) -> void:

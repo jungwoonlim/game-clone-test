@@ -1,137 +1,204 @@
-## Generates the placeholder terrain atlas.
+## Generates the terrain atlas.
 ##
 ##   godot --headless --path . --script res://tools/build_tiles.gd
 ##   godot --headless --path . --import          # import the new PNG
 ##
-## One 16x16 tile per Terrain.Type, laid out in a single row. Replacing this
-## with a real CC0 tileset later means swapping the PNG and keeping the order.
+## One 16x16 tile per Terrain.Type, in a single row. Everything is drawn from a
+## seeded RNG so the atlas is byte-identical every run — a noisy texture that
+## changed on every build would make every commit look like an art change.
 extends SceneTree
 
 const TILE := 16
 const OUT_PATH := "res://view_2d/field/terrain_tiles.png"
+const SEED := 611
 
-# base colour, accent colour, pattern name
+## base, dark, light, accent — order matches Terrain.Type.
 const TILES := [
-	[Color("c9b98c"), Color("b4a274"), "dots"],      # PLAIN
-	[Color("6aa84f"), Color("548a3c"), "tufts"],     # GRASS
-	[Color("2f6b32"), Color("1d4a20"), "trees"],     # FOREST
-	[Color("9c7a4a"), Color("7d5f36"), "bumps"],     # HILL
-	[Color("5a6b3a"), Color("3d4a26"), "blotches"],  # SWAMP
-	[Color("2a5fa8"), Color("3f78c4"), "waves"],     # WATER
-	[Color("4a4a55"), Color("33333c"), "bricks"],    # WALL
-	[Color("7a6a55"), Color("665742"), "dots"],      # FLOOR
-	[Color("8a6a3a"), Color("6b5029"), "planks"],    # BRIDGE
-	[Color("b04a3a"), Color("e8e2cf"), "house"],     # TOWN
-	[Color("3a3a44"), Color("15151a"), "arch"],      # CAVE
-	[Color("6a6a75"), Color("50505a"), "steps"],     # STAIRS_DOWN
-	[Color("9a9aa5"), Color("70707a"), "steps"],     # STAIRS_UP
-	[Color("8a5a2a"), Color("5e3c18"), "door"],      # DOOR
-	[Color("7a6a55"), Color("a8761f"), "chest"],     # CHEST
+	["c3b184", "ab9868", "d8c9a4", "8d7a4e", "speckle"],    # PLAIN
+	["5f9f47", "4a8036", "79bb5c", "3a6a28", "grass"],      # GRASS
+	["2f6b32", "1c4a20", "418f44", "5a3a1e", "forest"],     # FOREST
+	["9a7b4c", "7c6038", "b99a68", "6a5028", "hill"],       # HILL
+	["566b39", "3c4c25", "6d8449", "2d3a1b", "swamp"],      # SWAMP
+	["2a5fa8", "1d4a8c", "4a86d0", "8fc0f0", "water"],      # WATER
+	["4b4b58", "32323d", "656573", "23232c", "wall"],       # WALL
+	["7b6b56", "615340", "958471", "4a3e2f", "floor"],      # FLOOR
+	["8a6a3a", "6b5029", "a8875a", "4a3418", "bridge"],     # BRIDGE
+	["b04a3a", "7e2f24", "d4705c", "e8e2cf", "town"],       # TOWN
+	["3a3a44", "16161c", "55555f", "0b0b10", "cave"],       # CAVE
+	["6a6a75", "43434d", "8c8c98", "24242c", "down"],       # STAIRS_DOWN
+	["9a9aa5", "6e6e79", "bcbcc6", "34343c", "up"],         # STAIRS_UP
+	["8a5a2a", "5e3c18", "ab7640", "e8c84a", "door"],       # DOOR
+	["7b6b56", "5e3c18", "a8761f", "f0e08a", "chest"],      # CHEST
 ]
+
+var _rng := RandomNumberGenerator.new()
+var _image: Image
 
 
 func _initialize() -> void:
-	var image := Image.create(TILE * TILES.size(), TILE, false, Image.FORMAT_RGBA8)
+	_rng.seed = SEED
+	_image = Image.create(TILE * TILES.size(), TILE, false, Image.FORMAT_RGBA8)
 	for index in TILES.size():
-		_draw_tile(image, index * TILE, TILES[index][0], TILES[index][1], TILES[index][2])
+		_draw_tile(index * TILE, TILES[index])
 
 	DirAccess.make_dir_recursive_absolute(OUT_PATH.get_base_dir())
-	var err := image.save_png(OUT_PATH)
+	var err := _image.save_png(OUT_PATH)
 	print("[tiles] %d tiles -> %s (err=%d)" % [TILES.size(), OUT_PATH, err])
 	quit(0 if err == OK else 1)
 
 
-func _draw_tile(image: Image, ox: int, base: Color, accent: Color, pattern: String) -> void:
+# --- 유틸 -----------------------------------------------------------------
+
+func _px(ox: int, x: int, y: int, color: Color) -> void:
+	if x < 0 or y < 0 or x >= TILE or y >= TILE:
+		return
+	_image.set_pixel(ox + x, y, color)
+
+
+func _fill(ox: int, color: Color) -> void:
 	for y in TILE:
 		for x in TILE:
-			image.set_pixel(ox + x, y, base)
+			_px(ox, x, y, color)
 
-	match pattern:
-		"dots":
-			for p in [Vector2i(3, 4), Vector2i(11, 6), Vector2i(6, 12), Vector2i(13, 12)]:
-				_px(image, ox, p, accent)
-		"tufts":
-			for cx in [2, 7, 12]:
-				for cy in [3, 9, 14]:
-					_px(image, ox, Vector2i(cx, cy), accent)
-					_px(image, ox, Vector2i(cx + 1, cy - 1), accent)
-		"trees":
-			for c in [Vector2i(4, 5), Vector2i(11, 4), Vector2i(8, 11)]:
-				_disc(image, ox, c, 3, accent)
-		"bumps":
-			for c in [Vector2i(4, 10), Vector2i(11, 9)]:
-				_arc(image, ox, c, 4, accent)
-		"blotches":
-			for c in [Vector2i(5, 6), Vector2i(11, 11)]:
-				_disc(image, ox, c, 3, accent)
-		"waves":
-			for y in [3, 8, 13]:
-				for x in range(1, 15):
-					if (x + y) % 4 < 2:
-						_px(image, ox, Vector2i(x, y), accent)
-		"bricks":
-			for y in [0, 5, 10, 15]:
+
+func _rect(ox: int, x0: int, y0: int, x1: int, y1: int, color: Color) -> void:
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			_px(ox, x, y, color)
+
+
+## Scatters `color` over the tile. The checker offset keeps it looking like
+## texture rather than random dots.
+func _scatter(ox: int, color: Color, density: float) -> void:
+	for y in TILE:
+		for x in TILE:
+			if _rng.randf() < density:
+				_px(ox, x, y, color)
+
+
+func _disc(ox: int, cx: float, cy: float, radius: float, color: Color) -> void:
+	for y in TILE:
+		for x in TILE:
+			if Vector2(x + 0.5 - cx, y + 0.5 - cy).length() <= radius:
+				_px(ox, x, y, color)
+
+
+func _draw_tile(ox: int, spec: Array) -> void:
+	var base := Color(spec[0])
+	var dark := Color(spec[1])
+	var light := Color(spec[2])
+	var accent := Color(spec[3])
+	_fill(ox, base)
+
+	match spec[4]:
+		"speckle":
+			_scatter(ox, dark, 0.10)
+			_scatter(ox, light, 0.06)
+		"grass":
+			_scatter(ox, dark, 0.10)
+			for tuft in 7:
+				var x := _rng.randi_range(1, 14)
+				var y := _rng.randi_range(1, 14)
+				_px(ox, x, y, light)
+				_px(ox, x, y - 1, light)
+				_px(ox, x + 1, y, dark)
+		"forest":
+			_scatter(ox, dark, 0.2)
+			for canopy in [Vector2(4.5, 5.0), Vector2(11.5, 4.0), Vector2(8.0, 11.5)]:
+				_disc(ox, canopy.x, canopy.y, 3.4, dark)
+				_disc(ox, canopy.x, canopy.y, 2.6, base)
+				_disc(ox, canopy.x - 0.8, canopy.y - 0.8, 1.3, light)
+				_px(ox, int(canopy.x), int(canopy.y) + 4, accent)
+		"hill":
+			_scatter(ox, dark, 0.08)
+			for ridge in [Vector2(4.0, 9.0), Vector2(11.0, 12.0)]:
+				for x in range(int(ridge.x) - 4, int(ridge.x) + 5):
+					var dx: float = (x + 0.5 - ridge.x) / 4.0
+					var y: int = int(ridge.y - sqrt(maxf(0.0, 1.0 - dx * dx)) * 3.5)
+					_px(ox, x, y, light)
+					_px(ox, x, y + 1, dark)
+		"swamp":
+			_scatter(ox, dark, 0.22)
+			for bubble in [Vector2(4.5, 6.0), Vector2(11.0, 10.0), Vector2(7.5, 13.0)]:
+				_disc(ox, bubble.x, bubble.y, 1.8, dark)
+				_px(ox, int(bubble.x), int(bubble.y) - 1, light)
+		"water":
+			for y in TILE:
 				for x in TILE:
-					_px(image, ox, Vector2i(x, y), accent)
-			for y in range(TILE):
-				var offset := 0 if (y / 5) % 2 == 0 else 8
-				_px(image, ox, Vector2i((offset + 3) % TILE, y), accent)
-		"planks":
+					if (x + y * 3) % 16 < 2:
+						_px(ox, x, y, dark)
+			for y in [2, 7, 12]:
+				for x in range(1, 15):
+					if (x + y) % 5 < 2:
+						_px(ox, x, y, light)
+						_px(ox, x + 1, y + 1, accent)
+		"wall":
+			# Running-bond brick: every other course is offset by half a brick.
+			for course in 4:
+				var y := course * 4
+				_rect(ox, 0, y, 15, y, accent)
+				var offset := 0 if course % 2 == 0 else 4
+				for x in range(offset, 16, 8):
+					_rect(ox, x, y + 1, x, y + 3, accent)
+				for x in range(offset + 1, 16, 8):
+					_px(ox, x, y + 1, light)
+			_scatter(ox, dark, 0.07)
+		"floor":
+			_scatter(ox, dark, 0.12)
+			_scatter(ox, light, 0.05)
+			for crack in 2:
+				var x := _rng.randi_range(2, 12)
+				var y := _rng.randi_range(2, 12)
+				for step in 4:
+					_px(ox, x + step, y + (step % 2), accent)
+		"bridge":
 			for x in [0, 5, 10, 15]:
-				for y in TILE:
-					_px(image, ox, Vector2i(x, y), accent)
-		"house":
-			for y in range(4, 14):
-				for x in range(3, 13):
-					_px(image, ox, Vector2i(x, y), accent)
-			for y in range(2, 5):
-				for x in range(2 + (4 - y), 14 - (4 - y)):
-					_px(image, ox, Vector2i(x, y), Color("6b2f24"))
-			for y in range(9, 14):
-				for x in range(7, 10):
-					_px(image, ox, Vector2i(x, y), Color("6b2f24"))
-		"arch":
-			_disc(image, ox, Vector2i(8, 9), 5, accent)
-			for y in range(9, 15):
-				for x in range(4, 13):
-					_px(image, ox, Vector2i(x, y), accent)
-		"steps":
-			for i in 4:
-				for x in range(2 + i, 14):
-					_px(image, ox, Vector2i(x, 3 + i * 3), accent)
-		"chest":
-			for y in range(5, 14):
-				for x in range(3, 13):
-					_px(image, ox, Vector2i(x, y), accent)
-			for x in range(3, 13):
-				_px(image, ox, Vector2i(x, 5), Color("5e3c18"))
-				_px(image, ox, Vector2i(x, 9), Color("5e3c18"))
-				_px(image, ox, Vector2i(x, 13), Color("5e3c18"))
-			_px(image, ox, Vector2i(7, 10), Color("f0e08a"))
-			_px(image, ox, Vector2i(8, 10), Color("f0e08a"))
+				_rect(ox, x, 0, x, 15, accent)
+			_rect(ox, 0, 1, 15, 1, dark)
+			_rect(ox, 0, 14, 15, 14, dark)
+			_scatter(ox, light, 0.05)
+		"town":
+			_fill(ox, Color(spec[1]).lerp(Color("5f9f47"), 0.55))
+			_rect(ox, 2, 6, 13, 14, accent)
+			for y in range(2, 7):
+				_rect(ox, 1 + (y - 2), 8 - (y - 2), 14 - (y - 2), 8 - (y - 2), base)
+			_rect(ox, 6, 10, 9, 14, dark)
+			_px(ox, 9, 12, Color("e8c84a"))
+			_rect(ox, 3, 8, 4, 9, base)
+			_rect(ox, 11, 8, 12, 9, base)
+		"cave":
+			_scatter(ox, light, 0.10)
+			_disc(ox, 8.0, 9.0, 5.2, dark)
+			_rect(ox, 3, 9, 12, 15, dark)
+			_disc(ox, 8.0, 9.5, 3.6, accent)
+			_rect(ox, 5, 10, 10, 15, accent)
+		"down", "up":
+			var steps := 4
+			for i in steps:
+				var y := 1 + i * 4
+				var inset: int = i if spec[4] == "down" else steps - 1 - i
+				_rect(ox, inset, y, 15 - inset, y + 2, light if i % 2 == 0 else base)
+				_rect(ox, inset, y + 3, 15 - inset, y + 3, dark)
+			_scatter(ox, accent, 0.05)
 		"door":
-			for y in range(3, 15):
-				for x in range(4, 12):
-					_px(image, ox, Vector2i(x, y), accent)
-			_px(image, ox, Vector2i(10, 9), Color("e8c84a"))
-
-
-func _px(image: Image, ox: int, p: Vector2i, color: Color) -> void:
-	if p.x < 0 or p.y < 0 or p.x >= TILE or p.y >= TILE:
-		return
-	image.set_pixel(ox + p.x, p.y, color)
-
-
-func _disc(image: Image, ox: int, center: Vector2i, radius: int, color: Color) -> void:
-	for y in range(center.y - radius, center.y + radius + 1):
-		for x in range(center.x - radius, center.x + radius + 1):
-			if Vector2(x - center.x, y - center.y).length() <= float(radius):
-				_px(image, ox, Vector2i(x, y), color)
-
-
-func _arc(image: Image, ox: int, center: Vector2i, radius: int, color: Color) -> void:
-	for x in range(center.x - radius, center.x + radius + 1):
-		var dx := float(x - center.x) / float(radius)
-		var y := center.y - int(round(sqrt(maxf(0.0, 1.0 - dx * dx)) * radius))
-		_px(image, ox, Vector2i(x, y), color)
-		_px(image, ox, Vector2i(x, y + 1), color)
+			_fill(ox, Color(spec[1]))
+			_rect(ox, 2, 1, 13, 15, base)
+			_rect(ox, 2, 1, 2, 15, dark)
+			_rect(ox, 13, 1, 13, 15, dark)
+			_rect(ox, 2, 1, 13, 1, dark)
+			for x in [5, 8, 11]:
+				_rect(ox, x, 2, x, 15, light)
+			_disc(ox, 11.0, 9.0, 1.4, accent)
+		"chest":
+			_fill(ox, Color(spec[0]))
+			_scatter(ox, Color(spec[0]).darkened(0.15), 0.1)
+			_rect(ox, 2, 5, 13, 14, Color("a8761f"))
+			_rect(ox, 2, 5, 13, 8, Color("c9913a"))
+			_rect(ox, 2, 5, 13, 5, dark)
+			_rect(ox, 2, 9, 13, 9, dark)
+			_rect(ox, 2, 14, 13, 14, dark)
+			_rect(ox, 2, 5, 2, 14, dark)
+			_rect(ox, 13, 5, 13, 14, dark)
+			_rect(ox, 7, 9, 8, 12, dark)
+			_px(ox, 7, 10, accent)
+			_px(ox, 8, 10, accent)

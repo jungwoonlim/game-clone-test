@@ -20,8 +20,8 @@ const EQUIPMENT_SCHEDULE := [
 	[3, "w_club", "a_clothes", ""],
 	[7, "w_sword", "a_leather", ""],
 	[12, "w_sword", "a_leather", "s_small"],
-	[16, "w_blade", "a_plate", "s_small"],
-	[22, "w_blade", "a_plate", "s_large"],
+	[17, "w_blade", "a_plate", "s_small"],
+	[24, "w_blade", "a_plate", "s_large"],
 ]
 
 var _db: GameDatabase
