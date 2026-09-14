@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EncounterTable" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/data/encounter_entry.gd" id="1_op3ch"]
+[ext_resource type="Script" path="res://core/data/encounter_table.gd" id="2_shcjw"]
+
+[sub_resource type="Resource" id="Resource_xbe70"]
+script = ExtResource("1_op3ch")
+monster_id = &"m_ghost"
+weight = 20
+tier = 4
+
+[sub_resource type="Resource" id="Resource_3vypr"]
+script = ExtResource("1_op3ch")
+monster_id = &"m_magician"
+weight = 25
+tier = 5
+
+[sub_resource type="Resource" id="Resource_bva8t"]
+script = ExtResource("1_op3ch")
+monster_id = &"m_scorpion"
+weight = 30
+tier = 6
+
+[sub_resource type="Resource" id="Resource_b0rq7"]
+script = ExtResource("1_op3ch")
+monster_id = &"m_wraith"
+weight = 15
+tier = 7
+
+[resource]
+script = ExtResource("2_shcjw")
+id = &"et_dungeon"
+entries = Array[ExtResource("1_op3ch")]([SubResource("Resource_xbe70"), SubResource("Resource_3vypr"), SubResource("Resource_bva8t"), SubResource("Resource_b0rq7")])

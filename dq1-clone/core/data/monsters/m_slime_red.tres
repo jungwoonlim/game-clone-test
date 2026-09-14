@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_jj2hx"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_tcnm1"]
+
+[sub_resource type="Resource" id="Resource_2pgq7"]
+script = ExtResource("1_jj2hx")
+kind = "attack"
+spell_id = &""
+weight = 1
+hp_threshold = 1.0
+
+[resource]
+script = ExtResource("2_tcnm1")
+id = &"m_slime_red"
+display_name = "Red Slime"
+max_hp = 4
+max_mp = 0
+strength = 7
+agility = 3
+exp_reward = 4
+gold_reward_min = 3
+gold_reward_max = 5
+actions = Array[ExtResource("1_jj2hx")]([SubResource("Resource_2pgq7")])
+resist_sleep = 0
+resist_stopspell = 0
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false

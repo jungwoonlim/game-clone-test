@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/item_data.gd" id="1_8bbq0"]
+
+[resource]
+script = ExtResource("1_8bbq0")
+id = &"a_leather"
+display_name = "Leather Armor"
+kind = "armor"
+buy_price = 70
+sell_price = 35
+attack_bonus = 0
+defense_bonus = 4
+hurt_reduction = 0.0
+blocks_terrain_damage = false
+effect_id = &""
+effect_power = 0

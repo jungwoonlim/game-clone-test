@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/item_data.gd" id="1_mnf0l"]
+
+[resource]
+script = ExtResource("1_mnf0l")
+id = &"w_sword"
+display_name = "Sword"
+kind = "weapon"
+buy_price = 60
+sell_price = 30
+attack_bonus = 7
+defense_bonus = 0
+hurt_reduction = 0.0
+blocks_terrain_damage = false
+effect_id = &""
+effect_power = 0

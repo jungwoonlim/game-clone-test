@@ -20,37 +20,39 @@ dq1-clone/
 ├── project.godot
 ├── docs/
 ├── core/                      ← 렌더링 의존성 0
+│   ├── rng.gd                 ★ 시드 주입형 난수. 전역 randi() 금지
+│   ├── game_session.gd        ★ core의 유일한 진입점 (뷰와 툴이 공유)
 │   ├── data/                  Resource 정의 + .tres 데이터
-│   │   ├── monsters/
-│   │   ├── spells/
-│   │   ├── items/
-│   │   └── maps/
+│   │   ├── game_database.gd   전체 데이터 인덱스 (database.tres 하나로 로드)
+│   │   ├── monsters/ spells/ items/ maps/ encounters/
+│   │   └── level_curve.tres
 │   ├── battle/
 │   │   ├── battle_state.gd    전투 상태머신 (순수 로직)
+│   │   ├── battle_event.gd    턴 결과 이벤트
 │   │   ├── formulas.gd        ★ 모든 전투 공식이 여기에만 존재
-│   │   └── actor.gd           전투 참가자 (플레이어/몬스터 공통)
-│   ├── world/
-│   │   ├── world_state.gd     현재 맵, 논리 좌표, 걸음 수
-│   │   ├── movement.gd        그리드 이동·통행 판정
-│   │   └── encounter.gd       인카운터 추첨
+│   │   └── actor.gd           전투 참가자 (용사/몬스터 공통)
 │   ├── party/
-│   │   ├── hero.gd            스탯, 레벨업, 장비, 인벤토리
-│   │   └── progression.gd     EXP → 레벨, 주문 습득
-│   ├── dialogue/              대화 트리, 이벤트 플래그
-│   ├── save/
-│   └── rng.gd                 ★ 시드 주입형 난수. 전역 randi() 금지
+│   │   ├── hero.gd            스탯, 장비, 인벤토리
+│   │   └── progression.gd     EXP → 레벨 → 주문 습득, 사망 처리
+│   └── world/
+│       ├── world_state.gd     현재 맵, 논리 좌표, 걸음 수, 이동 판정
+│       ├── terrain.gd         지형 규칙 (통행/조우율/데미지)
+│       └── encounter.gd       인카운터 추첨, Repel
 │
 ├── view_2d/                   ← 나중에 view_3d/ 로 교체되는 층
-│   ├── field/                 TileMapLayer, 캐릭터 스프라이트, 카메라
-│   ├── battle/                전투 화면 연출
-│   └── ui/                    메시지 창, 커맨드 메뉴, 스테이터스
+│   ├── field/                 TileMapLayer, 용사 스프라이트, 카메라, 타일 아틀라스
+│   └── ui/                    메시지 창, 몬스터 초상, 전투 문구
 │
 ├── scenes/
-│   └── main.tscn              core와 view를 조립하는 유일한 지점
+│   └── main.tscn / main.gd    core와 view를 조립하는 유일한 지점
 │
-└── tools/
+└── tools/                     전부 헤드리스
+    ├── build_tiles.gd         플레이스홀더 타일 아틀라스 생성
+    ├── build_data.gd          .tres 데이터 + TileSet 시딩
     ├── validate_data.gd       데이터 정합성 검사
-    └── simulate_balance.gd    전투 시뮬레이션
+    ├── test_core.gd           core 동작 테스트 (결정성 포함)
+    ├── simulate_balance.gd    밸런스 리포트 생성
+    └── smoke_view.gd          core↔view 배선 검사
 ```
 
 ## 신호 흐름
@@ -93,7 +95,9 @@ var events := battle.resolve_turn(PlayerCommand.ATTACK)
 
 ```bash
 godot --headless --path . --script res://tools/validate_data.gd
+godot --headless --path . --script res://tools/test_core.gd
 godot --headless --path . --script res://tools/simulate_balance.gd
+godot --headless --path . --script res://tools/smoke_view.gd
 ```
 
 ### 1. 데이터 정합성 (`validate_data.gd`)

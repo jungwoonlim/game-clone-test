@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="MapData" load_steps=12 format=4]
+
+[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="1_fxwqh"]
+[ext_resource type="Script" path="res://core/data/map_data.gd" id="2_u28d2"]
+[ext_resource type="Script" path="res://core/data/warp_point.gd" id="3_d1uh2"]
+
+[sub_resource type="Resource" id="Resource_rhd0b"]
+script = ExtResource("1_fxwqh")
+id = &"shop_weapon"
+cell = Vector2i(6, 9)
+role = "shop_weapon"
+dialogue_key = "shop_weapon"
+
+[sub_resource type="Resource" id="Resource_w152k"]
+script = ExtResource("1_fxwqh")
+id = &"shop_armor"
+cell = Vector2i(21, 9)
+role = "shop_armor"
+dialogue_key = "shop_armor"
+
+[sub_resource type="Resource" id="Resource_t6b2x"]
+script = ExtResource("1_fxwqh")
+id = &"shop_item"
+cell = Vector2i(6, 18)
+role = "shop_item"
+dialogue_key = "shop_item"
+
+[sub_resource type="Resource" id="Resource_fsvxh"]
+script = ExtResource("1_fxwqh")
+id = &"inn"
+cell = Vector2i(21, 18)
+role = "inn"
+dialogue_key = "inn"
+
+[sub_resource type="Resource" id="Resource_gdfa2"]
+script = ExtResource("1_fxwqh")
+id = &"king"
+cell = Vector2i(16, 2)
+role = "king"
+dialogue_key = "king"
+
+[sub_resource type="Resource" id="Resource_sovvx"]
+script = ExtResource("1_fxwqh")
+id = &"villager_a"
+cell = Vector2i(13, 11)
+role = "villager"
+dialogue_key = "villager_a"
+
+[sub_resource type="Resource" id="Resource_pibri"]
+script = ExtResource("1_fxwqh")
+id = &"villager_b"
+cell = Vector2i(26, 12)
+role = "villager"
+dialogue_key = "villager_b"
+
+[sub_resource type="Resource" id="Resource_6wgp1"]
+script = ExtResource("3_d1uh2")
+from_cell = Vector2i(16, 23)
+to_map = &"field"
+to_cell = Vector2i(20, 23)
+
+[resource]
+script = ExtResource("2_u28d2")
+id = &"town"
+display_name = "Tantegel Town"
+width = 32
+height = 24
+tiles = PackedByteArray("BgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYGAAAABgYGBgYGAAAAAAAAAAAGBgYGBgYGAAAAAAAABgYAAAAGBgYGBgYAAAAAAAAAAAYGBgYGBgYAAAAAAAAGBgAAAAYGBgYGBgAAAAAAAAAABgYGBgYGBgAAAAAAAAYGAAAABgYGBgYGAAAAAAAAAAAGBgYGBgYGAAAAAAAABgYAAAAGBgYGBgYAAAAAAAAAAAYGBgYGBgYAAAAAAAAGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYGAAAABgYGBgYGAAAAAAAAAAAGBgYGBgYGAAAAAAAABgYAAAAGBgYGBgYAAAAAAAAAAAYGBgYGBgYAAAAAAAAGBgAAAAYGBgYGBgAAAAAAAAAABgYGBgYGBgAAAAAAAAYGAAAABgYGBgYGAAAAAAAAAAAGBgYGBgYGAAAAAAAABgYAAAAGBgYGBgYAAAAAAAAAAAYGBgYGBgYAAAAAAAAGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgYGBgYGBgYGBgYGBgYGBgYNBgYGBgYGBgYGBgYGBgYG")
+elevation = PackedByteArray("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+encounter_table_id = &""
+encounter_rate = 0
+is_dungeon = false
+base_sight_radius = 0
+warps = Array[ExtResource("3_d1uh2")]([SubResource("Resource_6wgp1")])
+npcs = Array[ExtResource("1_fxwqh")]([SubResource("Resource_rhd0b"), SubResource("Resource_w152k"), SubResource("Resource_t6b2x"), SubResource("Resource_fsvxh"), SubResource("Resource_gdfa2"), SubResource("Resource_sovvx"), SubResource("Resource_pibri")])
+default_spawn = Vector2i(16, 20)

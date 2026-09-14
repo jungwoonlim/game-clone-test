@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/item_data.gd" id="1_tfu20"]
+
+[resource]
+script = ExtResource("1_tfu20")
+id = &"s_small"
+display_name = "Small Shield"
+kind = "shield"
+buy_price = 90
+sell_price = 45
+attack_bonus = 0
+defense_bonus = 4
+hurt_reduction = 0.0
+blocks_terrain_damage = false
+effect_id = &""
+effect_power = 0

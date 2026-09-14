@@ -1,0 +1,151 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://view_2d/field/field_view.gd" id="2_field"]
+[ext_resource type="TileSet" path="res://view_2d/field/terrain_tileset.tres" id="3_tileset"]
+[ext_resource type="Script" path="res://view_2d/field/hero_sprite.gd" id="4_hero"]
+[ext_resource type="Script" path="res://view_2d/ui/message_log.gd" id="5_log"]
+[ext_resource type="Script" path="res://view_2d/ui/monster_sprite.gd" id="6_monster"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ui"]
+font_size = 9
+font_color = Color(0.95, 0.95, 0.91, 1)
+outline_size = 2
+outline_color = Color(0.04, 0.04, 0.07, 1)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="FieldView" type="Node2D" parent="."]
+script = ExtResource("2_field")
+
+[node name="Terrain" type="TileMapLayer" parent="FieldView"]
+tile_set = ExtResource("3_tileset")
+
+[node name="Hero" type="Node2D" parent="FieldView"]
+z_index = 10
+script = ExtResource("4_hero")
+
+[node name="Camera2D" type="Camera2D" parent="FieldView/Hero"]
+position_smoothing_enabled = true
+position_smoothing_speed = 12.0
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Status" type="ColorRect" parent="UI"]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 96.0
+offset_bottom = 70.0
+color = Color(0.05, 0.06, 0.12, 0.85)
+
+[node name="Text" type="Label" parent="UI/Status"]
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 88.0
+offset_bottom = 66.0
+label_settings = SubResource("LabelSettings_ui")
+text = "LV 1"
+
+[node name="Place" type="Label" parent="UI"]
+offset_left = 350.0
+offset_top = 8.0
+offset_right = 506.0
+offset_bottom = 26.0
+label_settings = SubResource("LabelSettings_ui")
+horizontal_alignment = 2
+
+[node name="Battle" type="Control" parent="UI"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="UI/Battle"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.02, 0.05, 0.78)
+
+[node name="Box" type="ColorRect" parent="UI/Battle"]
+offset_left = 136.0
+offset_top = 44.0
+offset_right = 376.0
+offset_bottom = 206.0
+mouse_filter = 2
+color = Color(0.08, 0.09, 0.16, 0.96)
+
+[node name="Title" type="Label" parent="UI/Battle"]
+offset_left = 136.0
+offset_top = 52.0
+offset_right = 376.0
+offset_bottom = 72.0
+label_settings = SubResource("LabelSettings_ui")
+text = "Monster"
+horizontal_alignment = 1
+
+[node name="Portrait" type="Control" parent="UI/Battle"]
+offset_left = 136.0
+offset_top = 76.0
+offset_right = 376.0
+offset_bottom = 160.0
+mouse_filter = 2
+script = ExtResource("6_monster")
+
+[node name="HpBack" type="ColorRect" parent="UI/Battle"]
+offset_left = 196.0
+offset_top = 166.0
+offset_right = 316.0
+offset_bottom = 174.0
+mouse_filter = 2
+color = Color(0.22, 0.09, 0.11, 1)
+
+[node name="HpFill" type="ColorRect" parent="UI/Battle"]
+offset_left = 196.0
+offset_top = 166.0
+offset_right = 316.0
+offset_bottom = 174.0
+mouse_filter = 2
+color = Color(0.78, 0.27, 0.3, 1)
+
+[node name="MonsterHp" type="Label" parent="UI/Battle"]
+offset_left = 136.0
+offset_top = 178.0
+offset_right = 376.0
+offset_bottom = 198.0
+label_settings = SubResource("LabelSettings_ui")
+text = "HP"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="UI/Battle"]
+offset_left = 6.0
+offset_top = 286.0
+offset_right = 506.0
+offset_bottom = 304.0
+label_settings = SubResource("LabelSettings_ui")
+horizontal_alignment = 1
+
+[node name="MessageLog" type="Control" parent="UI"]
+offset_left = 6.0
+offset_top = 308.0
+offset_right = 506.0
+offset_bottom = 378.0
+mouse_filter = 2
+script = ExtResource("5_log")
+
+[node name="Back" type="ColorRect" parent="UI/MessageLog"]
+offset_right = 500.0
+offset_bottom = 70.0
+mouse_filter = 2
+color = Color(0.05, 0.06, 0.12, 0.9)
+
+[node name="Text" type="Label" parent="UI/MessageLog"]
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 492.0
+offset_bottom = 66.0
+label_settings = SubResource("LabelSettings_ui")

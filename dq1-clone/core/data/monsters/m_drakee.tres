@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_g00qp"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_5mh4d"]
+
+[sub_resource type="Resource" id="Resource_fdrqn"]
+script = ExtResource("1_g00qp")
+kind = "attack"
+spell_id = &""
+weight = 1
+hp_threshold = 1.0
+
+[resource]
+script = ExtResource("2_5mh4d")
+id = &"m_drakee"
+display_name = "Drakee"
+max_hp = 6
+max_mp = 0
+strength = 9
+agility = 6
+exp_reward = 7
+gold_reward_min = 5
+gold_reward_max = 7
+actions = Array[ExtResource("1_g00qp")]([SubResource("Resource_fdrqn")])
+resist_sleep = 0
+resist_stopspell = 0
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false

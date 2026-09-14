@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="GameDatabase" load_steps=41 format=3]
+
+[ext_resource type="Script" path="res://core/data/encounter_table.gd" id="1_ne8u1"]
+[ext_resource type="Resource" path="res://core/data/encounters/et_field.tres" id="2_52ese"]
+[ext_resource type="Resource" path="res://core/data/encounters/et_dungeon.tres" id="3_0b6iu"]
+[ext_resource type="Script" path="res://core/data/item_data.gd" id="4_s1nud"]
+[ext_resource type="Resource" path="res://core/data/items/w_club.tres" id="5_yetoi"]
+[ext_resource type="Resource" path="res://core/data/items/w_sword.tres" id="6_bgp1k"]
+[ext_resource type="Resource" path="res://core/data/items/w_blade.tres" id="7_k8nug"]
+[ext_resource type="Resource" path="res://core/data/items/a_clothes.tres" id="8_n27ot"]
+[ext_resource type="Resource" path="res://core/data/items/a_leather.tres" id="9_e8fxu"]
+[ext_resource type="Resource" path="res://core/data/items/a_plate.tres" id="10_c4moo"]
+[ext_resource type="Resource" path="res://core/data/items/s_small.tres" id="11_pfqwl"]
+[ext_resource type="Resource" path="res://core/data/items/s_large.tres" id="12_w36n4"]
+[ext_resource type="Resource" path="res://core/data/items/herb.tres" id="13_r2pbn"]
+[ext_resource type="Resource" path="res://core/data/items/torch.tres" id="14_k555o"]
+[ext_resource type="Resource" path="res://core/data/level_curve.tres" id="15_h8s6i"]
+[ext_resource type="Script" path="res://core/data/map_data.gd" id="16_rtsep"]
+[ext_resource type="Resource" path="res://core/data/maps/town.tres" id="17_7yhk3"]
+[ext_resource type="Resource" path="res://core/data/maps/field.tres" id="18_ttur7"]
+[ext_resource type="Resource" path="res://core/data/maps/dungeon.tres" id="19_csw8i"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="20_4uayb"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_slime.tres" id="21_0fb46"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_slime_red.tres" id="22_qhpyd"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_drakee.tres" id="23_rbcsw"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_ghost.tres" id="24_gxuxf"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_magician.tres" id="25_y3uxb"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_scorpion.tres" id="26_v8bgt"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_wraith.tres" id="27_bylta"]
+[ext_resource type="Resource" path="res://core/data/monsters/m_dragonlord.tres" id="28_vf5l8"]
+[ext_resource type="Script" path="res://core/data/game_database.gd" id="29_w8xb6"]
+[ext_resource type="Script" path="res://core/data/spell_data.gd" id="30_uqqkn"]
+[ext_resource type="Resource" path="res://core/data/spells/heal.tres" id="31_styp7"]
+[ext_resource type="Resource" path="res://core/data/spells/hurt.tres" id="32_2buks"]
+[ext_resource type="Resource" path="res://core/data/spells/sleep.tres" id="33_ra48b"]
+[ext_resource type="Resource" path="res://core/data/spells/radiant.tres" id="34_w5xl0"]
+[ext_resource type="Resource" path="res://core/data/spells/stopspell.tres" id="35_cckyg"]
+[ext_resource type="Resource" path="res://core/data/spells/outside.tres" id="36_xnoy0"]
+[ext_resource type="Resource" path="res://core/data/spells/return.tres" id="37_6vyaj"]
+[ext_resource type="Resource" path="res://core/data/spells/repel.tres" id="38_ep5k4"]
+[ext_resource type="Resource" path="res://core/data/spells/healmore.tres" id="39_6yg2h"]
+[ext_resource type="Resource" path="res://core/data/spells/hurtmore.tres" id="40_k67hw"]
+
+[resource]
+script = ExtResource("29_w8xb6")
+monsters = Array[ExtResource("20_4uayb")]([ExtResource("21_0fb46"), ExtResource("22_qhpyd"), ExtResource("23_rbcsw"), ExtResource("24_gxuxf"), ExtResource("25_y3uxb"), ExtResource("26_v8bgt"), ExtResource("27_bylta"), ExtResource("28_vf5l8")])
+spells = Array[ExtResource("30_uqqkn")]([ExtResource("31_styp7"), ExtResource("32_2buks"), ExtResource("33_ra48b"), ExtResource("34_w5xl0"), ExtResource("35_cckyg"), ExtResource("36_xnoy0"), ExtResource("37_6vyaj"), ExtResource("38_ep5k4"), ExtResource("39_6yg2h"), ExtResource("40_k67hw")])
+items = Array[ExtResource("4_s1nud")]([ExtResource("5_yetoi"), ExtResource("6_bgp1k"), ExtResource("7_k8nug"), ExtResource("8_n27ot"), ExtResource("9_e8fxu"), ExtResource("10_c4moo"), ExtResource("11_pfqwl"), ExtResource("12_w36n4"), ExtResource("13_r2pbn"), ExtResource("14_k555o")])
+maps = Array[ExtResource("16_rtsep")]([ExtResource("17_7yhk3"), ExtResource("18_ttur7"), ExtResource("19_csw8i")])
+encounter_tables = Array[ExtResource("1_ne8u1")]([ExtResource("2_52ese"), ExtResource("3_0b6iu")])
+level_curve = ExtResource("15_h8s6i")
+start_map = &"town"
+start_gold = 120
+start_weapon = &""
+start_armor = &""
+start_shield = &""

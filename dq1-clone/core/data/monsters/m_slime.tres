@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_txge2"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_ksurk"]
+
+[sub_resource type="Resource" id="Resource_v60wi"]
+script = ExtResource("1_txge2")
+kind = "attack"
+spell_id = &""
+weight = 1
+hp_threshold = 1.0
+
+[resource]
+script = ExtResource("2_ksurk")
+id = &"m_slime"
+display_name = "Slime"
+max_hp = 3
+max_mp = 0
+strength = 5
+agility = 3
+exp_reward = 2
+gold_reward_min = 2
+gold_reward_max = 3
+actions = Array[ExtResource("1_txge2")]([SubResource("Resource_v60wi")])
+resist_sleep = 0
+resist_stopspell = 0
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false

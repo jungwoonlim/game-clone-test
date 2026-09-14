@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SpellData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/spell_data.gd" id="1_c4xp4"]
+
+[resource]
+script = ExtResource("1_c4xp4")
+id = &"healmore"
+display_name = "Healmore"
+mp_cost = 10
+kind = "heal"
+learn_level = 17
+hero_power_min = 85
+hero_power_max = 100
+monster_power_min = 85
+monster_power_max = 100
+usable_in_battle = true
+usable_in_field = true

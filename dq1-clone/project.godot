@@ -1,0 +1,28 @@
+; Dragon Quest 1 clone — Godot 4.x
+; Import this project.godot in the Godot editor.
+
+config_version=5
+
+[application]
+
+config/name="DQ1 Clone"
+config/description="Dragon Quest 1 system clone. Logic in core/ is renderer-free."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=512
+window/size/viewport_height=384
+window/size/window_width_override=1024
+window/size/window_height_override=768
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/stretch/scale_mode="integer"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0

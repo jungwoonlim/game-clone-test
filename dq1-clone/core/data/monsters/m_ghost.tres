@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_3mw4s"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_7ues8"]
+
+[sub_resource type="Resource" id="Resource_0sqjm"]
+script = ExtResource("1_3mw4s")
+kind = "attack"
+spell_id = &""
+weight = 1
+hp_threshold = 1.0
+
+[resource]
+script = ExtResource("2_7ues8")
+id = &"m_ghost"
+display_name = "Ghost"
+max_hp = 7
+max_mp = 0
+strength = 11
+agility = 8
+exp_reward = 12
+gold_reward_min = 8
+gold_reward_max = 12
+actions = Array[ExtResource("1_3mw4s")]([SubResource("Resource_0sqjm")])
+resist_sleep = 32
+resist_stopspell = 0
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false

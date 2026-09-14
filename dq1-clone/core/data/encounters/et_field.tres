@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="EncounterTable" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/data/encounter_entry.gd" id="1_kkr7p"]
+[ext_resource type="Script" path="res://core/data/encounter_table.gd" id="2_sl8kc"]
+
+[sub_resource type="Resource" id="Resource_kad1y"]
+script = ExtResource("1_kkr7p")
+monster_id = &"m_slime"
+weight = 40
+tier = 1
+
+[sub_resource type="Resource" id="Resource_3arpt"]
+script = ExtResource("1_kkr7p")
+monster_id = &"m_slime_red"
+weight = 25
+tier = 2
+
+[sub_resource type="Resource" id="Resource_1rvsc"]
+script = ExtResource("1_kkr7p")
+monster_id = &"m_drakee"
+weight = 20
+tier = 3
+
+[sub_resource type="Resource" id="Resource_wu2tf"]
+script = ExtResource("1_kkr7p")
+monster_id = &"m_ghost"
+weight = 10
+tier = 4
+
+[sub_resource type="Resource" id="Resource_83wo8"]
+script = ExtResource("1_kkr7p")
+monster_id = &"m_magician"
+weight = 5
+tier = 5
+
+[resource]
+script = ExtResource("2_sl8kc")
+id = &"et_field"
+entries = Array[ExtResource("1_kkr7p")]([SubResource("Resource_kad1y"), SubResource("Resource_3arpt"), SubResource("Resource_1rvsc"), SubResource("Resource_wu2tf"), SubResource("Resource_83wo8")])

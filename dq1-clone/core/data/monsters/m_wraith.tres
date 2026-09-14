@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_r1w7s"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_e53me"]
+
+[sub_resource type="Resource" id="Resource_ni1ch"]
+script = ExtResource("1_r1w7s")
+kind = "attack"
+spell_id = &""
+weight = 3
+hp_threshold = 1.0
+
+[sub_resource type="Resource" id="Resource_2s2j0"]
+script = ExtResource("1_r1w7s")
+kind = "spell"
+spell_id = &"hurt"
+weight = 2
+hp_threshold = 1.0
+
+[sub_resource type="Resource" id="Resource_dqxha"]
+script = ExtResource("1_r1w7s")
+kind = "spell"
+spell_id = &"heal"
+weight = 2
+hp_threshold = 0.4
+
+[resource]
+script = ExtResource("2_e53me")
+id = &"m_wraith"
+display_name = "Wraith"
+max_hp = 35
+max_mp = 40
+strength = 28
+agility = 22
+exp_reward = 70
+gold_reward_min = 34
+gold_reward_max = 48
+actions = Array[ExtResource("1_r1w7s")]([SubResource("Resource_ni1ch"), SubResource("Resource_2s2j0"), SubResource("Resource_dqxha")])
+resist_sleep = 96
+resist_stopspell = 64
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false

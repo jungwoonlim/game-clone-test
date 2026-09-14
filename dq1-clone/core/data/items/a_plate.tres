@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/item_data.gd" id="1_t8053"]
+
+[resource]
+script = ExtResource("1_t8053")
+id = &"a_plate"
+display_name = "Plate Armor"
+kind = "armor"
+buy_price = 300
+sell_price = 150
+attack_bonus = 0
+defense_bonus = 10
+hurt_reduction = 0.333
+blocks_terrain_damage = true
+effect_id = &""
+effect_power = 0

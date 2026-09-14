@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_5di0k"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_8x1ny"]
+
+[sub_resource type="Resource" id="Resource_2tfcn"]
+script = ExtResource("1_5di0k")
+kind = "attack"
+spell_id = &""
+weight = 3
+hp_threshold = 1.0
+
+[sub_resource type="Resource" id="Resource_n6xlo"]
+script = ExtResource("1_5di0k")
+kind = "spell"
+spell_id = &"sleep"
+weight = 1
+hp_threshold = 1.0
+
+[resource]
+script = ExtResource("2_8x1ny")
+id = &"m_scorpion"
+display_name = "Scorpion"
+max_hp = 20
+max_mp = 20
+strength = 18
+agility = 16
+exp_reward = 35
+gold_reward_min = 16
+gold_reward_max = 24
+actions = Array[ExtResource("1_5di0k")]([SubResource("Resource_2tfcn"), SubResource("Resource_n6xlo")])
+resist_sleep = 64
+resist_stopspell = 32
+resist_hurt = 0.0
+can_flee_from = true
+can_be_critical = true
+is_boss = false
