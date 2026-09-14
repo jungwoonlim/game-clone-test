@@ -27,9 +27,19 @@
 
 ## 실행
 
-1. [Godot 4.4 이상](https://godotengine.org/download) 설치
+1. [Godot 4.4 이상](https://godotengine.org/download) 설치 (4.4.1 / 4.7.2에서 검증)
 2. **Import** → 이 폴더의 `project.godot`
-3. **F5**
+3. 에디터가 임포트를 끝낼 때까지 기다린 뒤 **F5**
+
+> **`git pull` 뒤에 에러가 쏟아지면** — `Identifier "..." not declared`,
+> `Cannot open file 'res://.godot/imported/...'` — 임포트 캐시가 낡은 것입니다.
+> `.godot/`은 저장소에 들어가지 않으므로, 새 파일이 들어온 커밋을 받으면 Godot이
+> 한 번 다시 스캔해야 합니다. 에디터를 닫고:
+>
+> ```bash
+> rm -rf dq1-clone/.godot
+> godot --headless --path dq1-clone --import   # 또는 그냥 에디터에서 다시 열기
+> ```
 
 | 동작 | 키 |
 | --- | --- |
@@ -115,11 +125,11 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 2,898 checks (플레이스루 64건 별도)
+# 상시 검증 — 합계 2,907 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
-$G --headless --path . --script res://tools/test_presentation.gd  # 1502
+$G --headless --path . --script res://tools/test_presentation.gd  # 1511
 
 # 전체 플레이스루를 두 렌더러 × 두 언어 모두에 대해 (각 16)
 $G --headless --path . --script res://tools/smoke_view.gd

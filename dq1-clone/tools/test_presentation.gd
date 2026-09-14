@@ -13,6 +13,7 @@ const ART_DIR := "res://assets/art"
 const AUDIO_DIR := "res://assets/audio"
 const SCRIPT_DIRS := ["res://scenes", "res://view_2d"]
 const STRINGS_CSV := "res://assets/i18n/strings.csv"
+const THEME_PATH := "res://assets/theme/dq_theme.tres"
 const LOCALES := ["en", "ko"]
 
 var _failures: Array[String] = []
@@ -50,6 +51,7 @@ func _run() -> void:
 	_test_names_are_translated()
 	_test_josa()
 	_test_font_covers_every_character()
+	_test_theme_is_self_contained()
 	await _test_overlapping_flows()
 	_test_message_window_forgets()
 	await _test_system_menu()
@@ -131,13 +133,29 @@ func _test_text_speed() -> void:
 	if settings == null:
 		return
 	var original: int = settings.text_speed
-	var seen := {}
+
+	# Indexed by the setting, not by its label. Keying this on the displayed
+	# name quietly stopped testing anything the day the names were translated:
+	# in Korean there is no entry called "FAST".
+	var speeds: Array[float] = []
+	var names := {}
 	for i in 3:
 		settings.text_speed = i
-		seen[settings.text_speed_name()] = settings.chars_per_second()
-	_check(seen.size() == 3, "text speeds are not distinct: %s" % [seen])
-	_check(float(seen["FAST"]) > float(seen["SLOW"]),
-			"FAST is not faster than SLOW")
+		speeds.append(settings.chars_per_second())
+		names[settings.text_speed_name()] = true
+	_check(names.size() == 3, "text speeds share a name: %s" % [names.keys()])
+	_check(speeds[2] > speeds[1] and speeds[1] > speeds[0],
+			"text speeds are not ordered slow to fast: %s" % [speeds])
+
+	# And the names really are the translated ones, in both languages.
+	var before := TranslationServer.get_locale()
+	for locale in LOCALES:
+		TranslationServer.set_locale(locale)
+		settings.text_speed = 2
+		var fast: String = settings.text_speed_name()
+		_check(fast != "" and not fast.begins_with("SET_"),
+				"the fastest text speed reads %s in %s" % [fast, locale])
+	TranslationServer.set_locale(before)
 
 	settings.cycle_text_speed(1)
 	settings.save_settings()
@@ -405,6 +423,31 @@ func _test_font_covers_every_character() -> void:
 	for character in "0123456789/+-. HPMG":
 		_check(font.has_char(character.unicode_at(0)),
 				"the font has no glyph for %s" % character)
+
+
+## The Theme must not reference the .ttf. An [ext_resource] pointing at an
+## imported file does not point at the file — it points at what the importer
+## made of it, under .godot/, which is not in the repository. A fresh clone
+## then needed importing twice before it would start: once to produce the
+## font, once for the Theme to find it. In between, the project came up with
+## no theme, and every script that mentions a class came up unparsed. The font
+## is baked into the Theme instead, so it loads from the file itself.
+func _test_theme_is_self_contained() -> void:
+	var text := FileAccess.get_file_as_string(THEME_PATH)
+	_check(text != "", "%s is missing" % THEME_PATH)
+	_check(not text.contains("[ext_resource]") and not text.contains("ExtResource("),
+			"%s references an external resource; run tools/build_font.gd" % THEME_PATH)
+	_check(text.contains("sub_resource type=\"FontFile\""),
+			"%s has no font baked into it" % THEME_PATH)
+
+	var theme: Theme = load(THEME_PATH)
+	_check(theme != null and theme.default_font != null, "the theme has no default font")
+	if theme != null and theme.default_font != null:
+		# A fallback would let the player's own fonts fill in for glyphs we did
+		# not ship, which is exactly how the missing ▶ went unnoticed.
+		_check(theme.default_font.fallbacks.is_empty(),
+				"the theme font falls back on %d other fonts"
+				% theme.default_font.fallbacks.size())
 
 
 ## A key is a table key when it is one of the prefixes the table uses. This

@@ -56,10 +56,16 @@ func load_settings() -> void:
 
 ## The file stores the locale code, not its position in LOCALES — reordering
 ## that array must not silently switch somebody's language on them.
+## Two things this has to survive. A missing key: ConfigFile reads a `null`
+## default as "there is no default" and pushes an error, so the default here is
+## a real string. And a value left by an older build, which stored the index
+## rather than the code — anything that is not one of our locale strings is
+## treated as absent rather than converted, because converting it is both
+## meaningless and, on Godot 4.7, an error in itself.
 func _stored_language(config: ConfigFile) -> int:
-	var stored = config.get_value("text", "language", null)
-	if stored is String:
-		var found: int = LOCALES.find(stored)
+	var stored = config.get_value("text", "language", "")
+	if stored is String or stored is StringName:
+		var found: int = LOCALES.find(String(stored))
 		if found >= 0:
 			return found
 	return DEFAULT_LANGUAGE
