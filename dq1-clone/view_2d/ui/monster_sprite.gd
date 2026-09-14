@@ -3,8 +3,7 @@
 extends Control
 
 const SHEET := "res://assets/art/monsters.png"
-const CELL := 24
-const SCALE := 4
+const CELL := ArtSpec.MONSTER
 ## Column order must match MONSTER_ORDER in tools/build_sprites.gd.
 const COLUMNS := {
 	&"m_slime": 0, &"m_slime_red": 1, &"m_drakee": 2, &"m_ghost": 3,
@@ -58,7 +57,11 @@ func _kill_tween() -> void:
 func _draw() -> void:
 	if _texture == null or _column < 0:
 		return
-	var drawn := Vector2(CELL * SCALE, CELL * SCALE)
-	var origin := (size - drawn) * 0.5
+	# The scale is worked out from the space rather than fixed, so a monster
+	# pack drawn at some other cell size still lands in the same box. Whole
+	# numbers only: half a pixel of scaling is what makes pixel art shimmer.
+	var scale := maxi(1, int(minf(size.x, size.y)) / CELL)
+	var drawn := Vector2(CELL * scale, CELL * scale)
+	var origin := ((size - drawn) * 0.5).floor()
 	draw_texture_rect_region(_texture, Rect2(origin, drawn),
 			Rect2(_column * CELL, 0, CELL, CELL))
