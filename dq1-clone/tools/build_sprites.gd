@@ -29,26 +29,32 @@ const MONSTER_ORDER := [
 ]
 
 ## species -> [shape, base, shade, light, accent]
+##
+## NES colours, to sit with the tiles: saturated, few, and far apart. A
+## monster fills most of the battle window, so anything muted here reads as
+## washed out next to a field of pure green.
 const MONSTER_STYLE := {
-	"m_slime": ["slime", "4aa3e0", "2b6ba0", "9ad4ff", "ffffff"],
-	"m_slime_red": ["slime", "d9484d", "9a2b30", "ff9a9a", "ffffff"],
-	"m_drakee": ["bat", "8a5ec0", "5a3888", "c0a0e8", "f0d070"],
-	"m_ghost": ["ghost", "d8e0e8", "97a4b4", "ffffff", "6a7a8a"],
-	"m_magician": ["mage", "3f6fd0", "24417e", "7aa0e8", "e8c84a"],
-	"m_scorpion": ["scorpion", "c8862a", "8a5716", "efc06a", "2b2b33"],
-	"m_wraith": ["mage", "3a7a52", "1f4a30", "76bb8e", "d8e0e8"],
-	"m_dragonlord": ["knight", "6a4aa0", "3d2a66", "a184d8", "e8c84a"],
-	"m_dragonlord_true": ["dragon", "2f9e44", "1a6129", "72d089", "e8c84a"],
+	"m_slime": ["slime", "0078f8", "0000bc", "3cbcfc", "f8f8f8"],
+	"m_slime_red": ["slime", "e40058", "a80020", "f87858", "f8f8f8"],
+	"m_drakee": ["bat", "9440f8", "6844a8", "d0b0fc", "f8b800"],
+	"m_ghost": ["ghost", "e8e8f8", "9090a8", "ffffff", "585878"],
+	"m_magician": ["mage", "0058f8", "0000bc", "3cbcfc", "f8d878"],
+	"m_scorpion": ["scorpion", "e07000", "884000", "fcb040", "202020"],
+	"m_wraith": ["mage", "00a844", "006020", "58d878", "e8e8f8"],
+	"m_dragonlord": ["knight", "8038f8", "5000a8", "b878f8", "f8d878"],
+	"m_dragonlord_true": ["dragon", "00a800", "006000", "58d854", "f8d878"],
 }
 
-const HERO_STYLE := ["3f6fd0", "24417e", "7aa0e8", "e8c84a"]
+## The hero is Dragon Quest blue, with a face the colour of skin — at sixteen
+## pixels those two facts are most of what a player reads.
+const HERO_STYLE := ["0058f8", "0000bc", "3cbcfc", "fcd8a8"]
 ## NPC roles reuse the hero silhouette in their own colours.
 const NPC_ORDER := ["villager", "shop", "inn", "king"]
 const NPC_STYLE := {
-	"villager": ["3f9f5a", "215f36", "86d3a0", "c8b88a"],
-	"shop": ["b0762a", "744a15", "dcb066", "e8e2cf"],
-	"inn": ["9b5ec0", "633a80", "c79ae0", "e8e2cf"],
-	"king": ["c8a04a", "8a6a24", "efd48a", "e8c84a"],
+	"villager": ["00a844", "006020", "58d878", "fcd8a8"],
+	"shop": ["a05820", "683810", "d88840", "fcd8a8"],
+	"inn": ["9440f8", "6020a8", "c890fc", "fcd8a8"],
+	"king": ["f8b800", "a06000", "fcd878", "f8f8f8"],
 }
 
 
