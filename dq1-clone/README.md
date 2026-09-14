@@ -39,7 +39,7 @@
 | 시스템 메뉴 (설정 · 타이틀 · 종료) | Esc, 또는 메뉴 → 시스템 |
 | 설정 값 조절 | ← → |
 | 렌더러 전환 | 설정 → 화면 (2D / 2.5D) |
-| 언어 전환 | 설정 → 언어 (한국어 / ENGLISH) |
+| 언어 전환 | 설정 → 언어 (한국어 / ENGLISH) — 기본은 한국어 |
 | 메시지 넘기기 | 아무 키 |
 
 필드 메뉴: `TALK` `TAKE` `STATUS` `SPELL` `ITEM` `EQUIP` · 전투 메뉴: `FIGHT` `SPELL` `ITEM` `RUN`
@@ -115,11 +115,11 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 2,889 checks (플레이스루 64건 별도)
+# 상시 검증 — 합계 2,896 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
-$G --headless --path . --script res://tools/test_presentation.gd  # 1493
+$G --headless --path . --script res://tools/test_presentation.gd  # 1500
 
 # 전체 플레이스루를 두 렌더러 × 두 언어 모두에 대해 (각 16)
 $G --headless --path . --script res://tools/smoke_view.gd

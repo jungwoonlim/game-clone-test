@@ -20,11 +20,16 @@ var text_speed: int = 1
 var view_mode: int = 0
 
 ## Index into LOCALES. Applied to the TranslationServer on load, so the very
-## first frame the title screen draws is already in the player's language.
-var language: int = 0
+## first frame the title screen draws is already in the right language.
+var language: int = DEFAULT_LANGUAGE
 
-const LOCALES := ["en", "ko"]
-const LOCALE_KEYS := ["SET_LANG_EN", "SET_LANG_KO"]
+const LOCALES := ["ko", "en"]
+const LOCALE_KEYS := ["SET_LANG_KO", "SET_LANG_EN"]
+## This is a Korean game that also ships English, not the other way round.
+## Following the OS instead put an English title screen in front of anyone
+## whose machine was not set to Korean, which is not what the game is for.
+## An English-language machine still gets English; everything else gets Korean.
+const DEFAULT_LANGUAGE := 0
 
 const VIEW_NAMES := ["2D", "2.5D"]
 const VIEW_SCENES := ["res://scenes/main.tscn", "res://scenes/main_3d.tscn"]
@@ -44,18 +49,26 @@ func load_settings() -> void:
 		fullscreen = bool(config.get_value("video", "fullscreen", false))
 		text_speed = clampi(int(config.get_value("text", "speed", 1)), 0, 2)
 		view_mode = clampi(int(config.get_value("video", "view_mode", 0)), 0, 1)
-		language = clampi(int(config.get_value("text", "language", _system_language())),
-				0, LOCALES.size() - 1)
+		language = _stored_language(config)
 	else:
 		language = _system_language()
 	apply()
 
 
-## First run follows the machine. A Korean desktop should not have to find the
-## settings menu before it can read the title screen.
+## The file stores the locale code, not its position in LOCALES — reordering
+## that array must not silently switch somebody's language on them.
+func _stored_language(config: ConfigFile) -> int:
+	var stored = config.get_value("text", "language", null)
+	if stored is String:
+		var found: int = LOCALES.find(stored)
+		if found >= 0:
+			return found
+	return _system_language()
+
+
+## First run: Korean unless the machine explicitly asks for English.
 func _system_language() -> int:
-	var found := LOCALES.find(OS.get_locale_language())
-	return found if found >= 0 else 0
+	return 1 if OS.get_locale_language() == "en" else DEFAULT_LANGUAGE
 
 
 func save_settings() -> void:
@@ -65,7 +78,7 @@ func save_settings() -> void:
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("text", "speed", text_speed)
 	config.set_value("video", "view_mode", view_mode)
-	config.set_value("text", "language", language)
+	config.set_value("text", "language", LOCALES[clampi(language, 0, LOCALES.size() - 1)])
 	config.save(PATH)
 
 
