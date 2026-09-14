@@ -27,19 +27,41 @@
 
 ## 실행
 
-1. [Godot 4.4 이상](https://godotengine.org/download) 설치 (4.4.1 / 4.7.2에서 검증)
-2. **Import** → 이 폴더의 `project.godot`
-3. 에디터가 임포트를 끝낼 때까지 기다린 뒤 **F5**
+[Godot 4.4 이상](https://godotengine.org/download)이 필요합니다 (4.4.1 / 4.7.2에서 검증).
 
-> **`git pull` 뒤에 에러가 쏟아지면** — `Identifier "..." not declared`,
-> `Cannot open file 'res://.godot/imported/...'` — 임포트 캐시가 낡은 것입니다.
-> `.godot/`은 저장소에 들어가지 않으므로, 새 파일이 들어온 커밋을 받으면 Godot이
-> 한 번 다시 스캔해야 합니다. 에디터를 닫고:
->
-> ```bash
-> rm -rf dq1-clone/.godot
-> godot --headless --path dq1-clone --import   # 또는 그냥 에디터에서 다시 열기
-> ```
+```bash
+cd dq1-clone
+./run.sh
+```
+
+Godot을 PATH에서 못 찾으면 알려주면 됩니다:
+
+```bash
+GODOT=/Applications/Godot.app/Contents/MacOS/Godot ./run.sh   # macOS 기본 설치 경로
+```
+
+에디터로 작업할 때는 평소대로 **Import → `project.godot` → F5**.
+
+<details>
+<summary><code>run.sh</code>가 따로 있는 이유</summary>
+
+Godot을 `--path` 로만 실행하면 그건 **게임 실행** 모드입니다. 이 모드는
+`class_name` 을 스캔하지 않고 `.godot/global_script_class_cache.cfg` 를 읽기만
+합니다. 그 파일은 에디터나 `--import` 가 만들고, `.godot/` 은 저장소에 들어가지
+않습니다.
+
+그래서 갓 clone 한 저장소나 새 스크립트를 받아 온 저장소를 바로 실행하면
+`Identifier "..." not declared` 가 쏟아집니다. 게임이 고장 난 게 아니라 아직
+스캔되지 않은 것입니다. `run.sh` 는 그 스캔이 필요한지 직접 판단해서 필요할 때만
+돌립니다 — 처음 clone 했을 때와, `git pull` 로 파일이 바뀐 뒤에.
+
+직접 하고 싶으면 이것과 같습니다:
+
+```bash
+godot --headless --path . --import   # 한 번만
+godot --path .
+```
+</details>
 
 | 동작 | 키 |
 | --- | --- |
