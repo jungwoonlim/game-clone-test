@@ -12,7 +12,7 @@ const COLUMNS := {
 	&"m_dragonlord": 7, &"m_dragonlord_true": 8,
 }
 
-var _texture: Texture2D = load(SHEET)
+var _texture: Texture2D = load(ArtSpec.sheet(&"monsters")["path"])
 var _column := -1
 var _home: Vector2 = Vector2.ZERO
 var _tween: Tween = null

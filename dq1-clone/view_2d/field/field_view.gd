@@ -4,7 +4,7 @@
 ## encounters, battles or stats.
 extends Node2D
 
-const TILE := 16
+const TILE := ArtSpec.TILE
 const WALK_SPEED := 90.0
 
 @onready var _terrain: TileMapLayer = $Terrain

@@ -1,17 +1,21 @@
 # 08. 에셋 파이프라인
 
-이 프로젝트에는 **외부에서 가져온 에셋이 하나도 없습니다.** 타일, 스프라이트,
-효과음, 음악이 전부 `tools/`의 생성기에서 나옵니다.
+**그림과 소리는 전부 `tools/`의 생성기에서 나옵니다.** 타일, 스프라이트, 효과음,
+음악 — 외부에서 가져온 것은 한글 글꼴 하나뿐입니다.
 
 원래 계획(`05-ROADMAP.md` M6)은 CC0 타일셋을 가져다 쓰는 것이었지만, 개발 환경에서
 외부 에셋을 받을 수 없었습니다. 그래서 **받아온 척하는 대신 전부 생성했습니다.**
 출처가 불분명한 에셋을 커밋하는 것보다 이쪽이 정직하고, 라이선스 문제도 없습니다.
 
+생성 에셋은 **플레이스홀더입니다.** 진짜 아트로 바꾸는 절차는 아래
+[진짜 에셋으로 바꾸려면](#진짜-에셋으로-바꾸려면)에 있습니다 — 시트 레이아웃이
+계약으로 적혀 있고, 잘못 넣으면 화면을 보기 전에 테스트가 잡습니다.
+
 ## 무엇이 생성되는가
 
 | 산출물 | 생성기 | 내용 |
 | --- | --- | --- |
-| `view_2d/field/terrain_tiles.png` | `tools/build_tiles.gd` | 16×16 지형 타일 15종 |
+| `assets/art/terrain_tiles.png` | `tools/build_tiles.gd` | 16×16 지형 타일 15종 |
 | `assets/art/monsters.png` | `tools/build_sprites.gd` | 24×24 몬스터 9종 |
 | `assets/art/hero.png` | `tools/build_sprites.gd` | 16×16, 4방향 × 2프레임 |
 | `assets/art/npcs.png` | `tools/build_sprites.gd` | 16×16 NPC 4역할 |
@@ -72,6 +76,86 @@ $G --headless --path . --import
 - **사운드 이름 대조** — `view_2d/`와 `scenes/`의 모든 `"sfx_*"` / `"bgm_*"` 문자열을
   정규식으로 긁어 실제 파일과 맞춰봅니다. 오타 난 사운드 이름은 런타임에 조용히
   무시되고 스크린샷에도 안 남기 때문에, 이걸 자동으로 잡지 않으면 영영 모릅니다
+
+## 진짜 에셋으로 바꾸려면
+
+### 1. 레이아웃 계약을 본다
+
+모든 시트의 크기·칸 수·칸 순서는 **`view_2d/art/art_spec.gd` 한 곳**에 있습니다.
+생성기가 그걸 보고 그리고, 뷰가 그걸 보고 읽고, 테스트가 디스크의 파일을 그것과
+대조합니다.
+
+그림으로 보려면 **[asset-layout.png](asset-layout.png)** — 어느 칸이 늪이고 어느
+칸이 계단인지 라벨이 붙어 있습니다. 체커 무늬는 투명한 부분입니다.
+
+```bash
+xvfb-run -a godot --path . --rendering-driver opengl3 \
+    --script res://tools/build_art_guide.gd     # 가이드 다시 그리기
+```
+
+| 시트 | 칸 | 칸 크기 | 배경 |
+| --- | --- | --- | --- |
+| `assets/art/terrain_tiles.png` | 15 | 16px | **불투명** (지형은 꽉 차야 함) |
+| `assets/art/terrain_props.png` | 5 | 16px | 투명 |
+| `assets/art/hero.png` | 8 (2열 × 4줄) | 16px | 투명 |
+| `assets/art/npcs.png` | 4 | 16px | 투명 |
+| `assets/art/monsters.png` | 9 | 24px | 투명 |
+
+### 2. 같은 이름으로 덮어쓴다
+
+`assets/art/` 에 같은 파일명으로 넣으면 됩니다. **코드는 0줄**입니다. 2.5D도 같은
+아틀라스를 UV로 참조하므로 같이 바뀝니다.
+
+### 3. 검증한다 — 화면을 보기 전에
+
+```bash
+godot --headless --path . --import
+godot --headless --path . --script res://tools/test_presentation.gd
+```
+
+잘못 넣으면 이렇게 나옵니다.
+
+```
+FAIL  res://assets/art/terrain_tiles.png is 224x16, expected 240x16 (15 cells of 16px)
+FAIL  res://assets/art/hero.png cell down 1 has no transparency; it will draw its own background
+FAIL  res://assets/art/monsters.png cell m_wraith is empty
+```
+
+잡아내는 것: 시트 크기, 칸 수, **빈 칸**(팩이 칸보다 먼저 동난 경우), 지형 시트의
+투명 픽셀, 스프라이트 시트의 불투명 배경, 그리고 데이터와 시트의 불일치(몬스터를
+추가했는데 칸이 없는 경우).
+
+### 4. 스크린샷을 다시 찍어 비교한다
+
+```bash
+xvfb-run -a godot --path . --rendering-driver opengl3 \
+    --script res://tools/capture_screens.gd -- ko
+```
+
+### 한 번에 하나씩
+
+지형 → 캐릭터 → 몬스터 → 오디오 순서를 권합니다. 지형이 화면의 대부분이라
+인상이 가장 크게 바뀌고, 한 번에 하나만 바꿔야 뭐가 이상해졌는지 알 수 있습니다.
+
+## 라이선스
+
+무료 팩은 대개 **조건부**로 무료입니다. CC-BY 는 저작자 표시를 요구하고, OFL 은
+고지를 같이 싣기를 요구합니다. 문서에만 적어두면 둘 다 만족하지 않습니다.
+
+`assets/credits.csv` 한 파일이 출처 목록이고, **게임 안 타이틀 → 만든 것들**이
+같은 파일을 읽어 화면에 띄웁니다. 팩을 넣으면 여기 한 줄을 고치면 됩니다.
+
+```csv
+"item","what","source","author","license","url"
+"res://assets/art/terrain_tiles.png","지형 아틀라스","Foo Tileset","작가명","CC-BY-4.0","https://..."
+```
+
+`test_presentation.gd` 가 **모든 시트·오디오·글꼴에 표기 행이 있는지** 검사합니다.
+팩만 갈아끼우고 표기를 빠뜨리면 실패합니다 — 게임은 멀쩡해 보이고 그게 문제라서,
+자동으로 잡지 않으면 출시 때까지 모릅니다.
+
+> 원작 드래곤 퀘스트의 아트·음악·폰트는 **쓸 수 없습니다.** 스퀘어에닉스의
+> 자산입니다. 교체할 때도 CC0 이거나 상업 이용이 명시된 것만 쓰세요.
 
 ## 글꼴만은 받아 옵니다
 

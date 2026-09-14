@@ -3,6 +3,7 @@ extends Control
 
 @onready var _menu: CommandWindow = $Menu
 @onready var _settings: SettingsWindow = $Settings
+@onready var _credits: CreditsWindow = $Credits
 @onready var _save_note: Label = $SaveNote
 
 
@@ -24,8 +25,9 @@ func _run_menu() -> void:
 		var has_save := SaveGame.has_save()
 		var pick := await _menu.open_menu(
 				[Loc.t("TITLE_CONTINUE"), Loc.t("TITLE_NEW"),
-				Loc.t("TITLE_SETTINGS"), Loc.t("TITLE_QUIT")],
-				[], [has_save, true, true, true], false)
+				Loc.t("TITLE_SETTINGS"), Loc.t("TITLE_CREDITS"),
+				Loc.t("TITLE_QUIT")],
+				[], [has_save, true, true, true, true], false)
 		match pick:
 			0:
 				_begin(true)
@@ -39,6 +41,8 @@ func _run_menu() -> void:
 				_refresh_save_note()
 				_retitle()
 			3:
+				await _credits.open_credits()
+			4:
 				get_tree().quit()
 				return
 

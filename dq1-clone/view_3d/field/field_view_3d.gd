@@ -6,13 +6,13 @@
 ## which one it has. That substitutability is the whole point of M7.
 extends Node3D
 
-const TILE_PIXELS := 16
+const TILE_PIXELS := ArtSpec.TILE
 const WALK_SPEED := 5.6
 ## Sprites are centred on their origin, so standing one on the ground means
 ## lifting it by half its height. Forgetting this buries the party to the waist.
 const SPRITE_LIFT := 0.5
-const ATLAS := "res://view_2d/field/terrain_tiles.png"
-const PROP_ATLAS := "res://view_2d/field/terrain_props.png"
+const ATLAS := ArtSpec.DIR + "/terrain_tiles.png"
+const PROP_ATLAS := ArtSpec.DIR + "/terrain_props.png"
 ## terrain -> column in the prop atlas
 const PROP_COLUMNS := {
 	Terrain.Type.FOREST: 0, Terrain.Type.TOWN: 1, Terrain.Type.CAVE: 2,
@@ -27,8 +27,8 @@ const PROP_GROUND := {
 	Terrain.Type.DOOR: Terrain.Type.FLOOR,
 	Terrain.Type.CHEST: Terrain.Type.FLOOR,
 }
-const HERO_SHEET := "res://assets/art/hero.png"
-const NPC_SHEET := "res://assets/art/npcs.png"
+const HERO_SHEET := ArtSpec.DIR + "/hero.png"
+const NPC_SHEET := ArtSpec.DIR + "/npcs.png"
 const NPC_COLUMNS := {"villager": 0, "shop": 1, "inn": 2, "king": 3}
 const HERO_ROWS := {
 	Vector2i.DOWN: 0, Vector2i.UP: 1, Vector2i.LEFT: 2, Vector2i.RIGHT: 3,

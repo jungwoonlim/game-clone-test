@@ -8,9 +8,9 @@
 ## art rather than coloured blobs, and it costs nothing per species.
 extends SceneTree
 
-const MONSTER := 24
-const CHAR := 16
-const ART_DIR := "res://assets/art"
+const MONSTER := ArtSpec.MONSTER
+const CHAR := ArtSpec.TILE
+const ART_DIR := ArtSpec.DIR
 
 # Index grid values.
 const EMPTY := 0

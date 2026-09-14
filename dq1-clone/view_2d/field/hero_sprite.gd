@@ -4,9 +4,10 @@
 ## no face, which is how direction reads at sixteen pixels.
 extends Node2D
 
-const SHEET := "res://assets/art/hero.png"
-const SIZE := 16
+const SIZE := ArtSpec.TILE
 
+## Row order is the sheet's, and the sheet's order is written down once in
+## ArtSpec — not here and in the generator and in a comment.
 const ROWS := {
 	Vector2i.DOWN: 0,
 	Vector2i.UP: 1,
@@ -16,7 +17,7 @@ const ROWS := {
 
 var facing: Vector2i = Vector2i.DOWN
 
-var _texture: Texture2D = load(SHEET)
+var _texture: Texture2D = load(ArtSpec.sheet(&"hero")["path"])
 var _frame := 0
 
 

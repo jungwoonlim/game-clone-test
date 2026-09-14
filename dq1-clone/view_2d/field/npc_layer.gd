@@ -4,13 +4,12 @@
 ## invisible wall.
 extends Node2D
 
-const SHEET := "res://assets/art/npcs.png"
-const TILE := 16
-## Column order must match NPC_ORDER in tools/build_sprites.gd.
+const TILE := ArtSpec.TILE
+## Column order is the sheet's; ArtSpec is where that order is written down.
 const COLUMNS := {"villager": 0, "shop": 1, "inn": 2, "king": 3}
 
 var _npcs: Array[NpcPlacement] = []
-var _texture: Texture2D = load(SHEET)
+var _texture: Texture2D = load(ArtSpec.sheet(&"npcs")["path"])
 
 
 func set_npcs(npcs: Array[NpcPlacement]) -> void:

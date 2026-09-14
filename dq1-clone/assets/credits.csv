@@ -1,0 +1,8 @@
+"item","what","source","author","license","url"
+"res://assets/art/terrain_tiles.png","지형 아틀라스","이 저장소에서 생성 (tools/build_tiles.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/art/terrain_props.png","2.5D 입체물","이 저장소에서 생성 (tools/build_tiles.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/art/hero.png","주인공 스프라이트","이 저장소에서 생성 (tools/build_sprites.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/art/npcs.png","마을 사람 스프라이트","이 저장소에서 생성 (tools/build_sprites.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/art/monsters.png","몬스터 초상","이 저장소에서 생성 (tools/build_sprites.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/audio","효과음과 BGM","이 저장소에서 합성 (tools/build_audio.gd)","jungwoonlim","CC0-1.0",""
+"res://assets/fonts","Noto Sans KR (서브셋)","Google Fonts","Google","SIL OFL 1.1","https://fonts.google.com/noto/specimen/Noto+Sans+KR"

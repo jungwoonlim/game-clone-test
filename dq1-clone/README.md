@@ -147,11 +147,11 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 2,925 checks (플레이스루 64건 별도)
+# 상시 검증 — 합계 3,072 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
-$G --headless --path . --script res://tools/test_presentation.gd  # 1529
+$G --headless --path . --script res://tools/test_presentation.gd  # 1676
 
 # 실제 키 입력 퍼징 — 씬 3개 × 시드 8개
 tools/fuzz_input.sh
@@ -167,6 +167,10 @@ $G --headless --path . --script res://tools/fuzz_core.gd -- 400 400
 
 # 밸런스 리포트 → docs/07-BALANCE_REPORT.md
 $G --headless --path . --script res://tools/simulate_balance.gd
+
+# 시트 레이아웃 가이드 → docs/asset-layout.png
+xvfb-run -a $G --path . --rendering-driver opengl3 \
+    --script res://tools/build_art_guide.gd
 
 # 문서 스크린샷 다시 찍기 → docs/screenshot-*.png
 xvfb-run -a $G --path . --rendering-driver opengl3 \
@@ -217,6 +221,7 @@ xvfb-run -a $G --path . --rendering-driver opengl3 \
 | [09-2_5D.md](docs/09-2_5D.md) | 2.5D 리메이크 — 무엇을 바꿨고 무엇을 안 바꿨나 |
 | [10-BUGHUNT.md](docs/10-BUGHUNT.md) | 퍼징과 정독으로 잡은 버그 5개 |
 | [11-I18N.md](docs/11-I18N.md) | 한글화 — core를 한 줄도 안 바꾸고 |
+| [asset-layout.png](docs/asset-layout.png) | 시트 레이아웃 그림 — 어느 칸에 뭘 그려야 하는지 |
 
 ## 주의
 

@@ -4,7 +4,7 @@
 ## reads as "the walls are just beyond your torch".
 extends Node2D
 
-const TILE := 16
+const TILE := ArtSpec.TILE
 
 var _center := Vector2i.ZERO
 var _radius := 0

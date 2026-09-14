@@ -1,0 +1,6 @@
+[remap]
+
+; Godot imports every .csv as a translation table. This one is not one — it is
+; the list of what the game is made of and who made it, read at runtime by the
+; credits screen. "keep" leaves the file alone and ships it verbatim.
+importer="keep"

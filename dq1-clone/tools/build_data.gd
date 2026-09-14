@@ -10,7 +10,7 @@
 extends SceneTree
 
 const MAX_LEVEL := 30
-const TILE_SIZE := 16
+const TILE_SIZE := ArtSpec.TILE
 
 # Confirmed across sources; still flagged for ROM compare. See docs/06.
 const REQUIRED_EXP := [
@@ -601,7 +601,7 @@ func _build_dungeon_b2() -> MapData:
 # --- 타일셋 ---------------------------------------------------------------
 
 func _build_tileset() -> void:
-	var texture: Texture2D = load("res://view_2d/field/terrain_tiles.png")
+	var texture: Texture2D = load(ArtSpec.SHEETS[&"tiles"]["path"])
 	if texture == null:
 		printerr("[build] terrain_tiles.png missing. Run build_tiles.gd then --import.")
 		quit(1)

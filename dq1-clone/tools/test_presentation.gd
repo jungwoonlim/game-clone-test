@@ -53,6 +53,7 @@ func _run() -> void:
 	_test_font_covers_every_character()
 	_test_theme_is_self_contained()
 	_test_no_stray_imports()
+	_test_everything_is_credited()
 	await _test_overlapping_flows()
 	_test_message_window_forgets()
 	await _test_system_menu()
@@ -451,6 +452,41 @@ func _test_theme_is_self_contained() -> void:
 				% theme.default_font.fallbacks.size())
 
 
+## Free art is mostly free on a condition. CC-BY wants the author named, OFL
+## wants its notice carried along, and a pack swapped in without updating the
+## table is a licence breach that nothing else in this project would notice —
+## the game looks fine, which is the whole problem. So every sheet the game
+## draws, plus the audio and the font, has to have a row.
+func _test_everything_is_credited() -> void:
+	var entries: Array = load("res://view_2d/ui/credits_window.gd").load_entries()
+	_check(entries.size() >= 5, "credits.csv holds %d entries" % entries.size())
+
+	var credited := {}
+	for entry in entries:
+		var item := String(entry.get("item", ""))
+		credited[item] = true
+		_check(item != "", "a credits row names nothing")
+		_check(String(entry.get("license", "")) != "",
+				"%s has no licence" % item)
+		_check(String(entry.get("author", "")) != "",
+				"%s has no author" % item)
+		_check(String(entry.get("what", "")) != "",
+				"%s has no description" % item)
+
+	for name in ArtSpec.SHEETS:
+		var path: String = ArtSpec.SHEETS[name]["path"]
+		_check(credited.has(path), "%s is not credited" % path)
+	for directory in ["res://assets/audio", "res://assets/fonts"]:
+		_check(credited.has(directory), "%s is not credited" % directory)
+
+	# Godot imports every .csv as a translation table unless told otherwise,
+	# which would turn this one into five .translation files and nothing the
+	# credits screen can read.
+	var import_file := FileAccess.get_file_as_string("res://assets/credits.csv.import")
+	_check(import_file.contains("importer=\"keep\""),
+			"credits.csv is being imported instead of shipped as it is")
+
+
 ## Every file Godot imports costs import time and a baked copy under .godot/,
 ## and shows up in the editor as if the game used it. The screenshots in docs/
 ## are documentation: thirteen of them were being turned into game textures,
@@ -624,40 +660,37 @@ func _sheet(path: String) -> Image:
 
 # --- 아트 -----------------------------------------------------------------
 
+## Every sheet on disk, against ArtSpec. This is what makes dropping in
+## somebody else's art a safe operation: a pack with fourteen terrain tiles
+## instead of fifteen, or a 32px tileset, or sprites with an opaque background,
+## all fail here rather than looking subtly wrong for the rest of the game.
 func _test_art_sheets() -> void:
-	var monsters := _sheet("%s/monsters.png" % ART_DIR)
-	_check(monsters != null, "monsters.png is missing; run build_sprites.gd")
-	if monsters != null:
-		_check(monsters.get_height() == 24, "monster sheet is %d tall" % monsters.get_height())
-		_check(monsters.get_width() == 24 * _db.monsters.size(),
-				"monster sheet has %d columns for %d monsters"
-				% [monsters.get_width() / 24, _db.monsters.size()])
+	for name in ArtSpec.SHEETS:
+		_check_sheet(name)
 
-	# Every monster must map to a column, or it draws as nothing at all.
+	# The sheets say what they hold; the data says what has to exist. These
+	# two lists drifting apart is how a new monster ends up invisible.
+	var monster_cells: Array = ArtSpec.SHEETS[&"monsters"]["cells"]
 	var columns: Dictionary = load("res://view_2d/ui/monster_sprite.gd").COLUMNS
 	for monster in _db.monsters:
-		_check(columns.has(monster.id),
-				"%s has no sprite column" % monster.id)
+		_check(columns.has(monster.id), "%s has no sprite column" % monster.id)
+		_check(monster_cells.has(String(monster.id)),
+				"%s has no cell in the monster sheet" % monster.id)
+	_check(monster_cells.size() == _db.monsters.size(),
+			"the monster sheet holds %d cells for %d monsters"
+			% [monster_cells.size(), _db.monsters.size()])
 
-	var hero := _sheet("%s/hero.png" % ART_DIR)
-	_check(hero != null, "hero.png is missing")
-	if hero != null:
-		_check(hero.get_width() == 32 and hero.get_height() == 64,
-				"hero sheet is %dx%d, expected 32x64 (2 frames x 4 facings)"
-				% [hero.get_width(), hero.get_height()])
+	var tile_cells: Array = ArtSpec.SHEETS[&"tiles"]["cells"]
+	for index in Terrain.Type.size():
+		var expected: String = Terrain.Type.keys()[index]
+		_check(index < tile_cells.size() and tile_cells[index] == expected,
+				"terrain %d is %s but the atlas has %s at that cell"
+				% [index, expected, tile_cells[index] if index < tile_cells.size() else "nothing"])
 
-	var npcs := _sheet("%s/npcs.png" % ART_DIR)
-	_check(npcs != null, "npcs.png is missing")
-	if npcs != null:
-		_check(npcs.get_width() == 64 and npcs.get_height() == 16,
-				"npc sheet is %dx%d, expected 64x16" % [npcs.get_width(), npcs.get_height()])
-
-	var tiles := _sheet("res://view_2d/field/terrain_tiles.png")
-	_check(tiles != null, "terrain_tiles.png is missing")
-	if tiles != null:
-		_check(tiles.get_width() == 16 * Terrain.Type.size(),
-				"tile atlas has %d tiles for %d terrain types"
-				% [tiles.get_width() / 16, Terrain.Type.size()])
+	var npc_cells: Array = ArtSpec.SHEETS[&"npcs"]["cells"]
+	var npc_columns: Dictionary = load("res://view_2d/field/npc_layer.gd").COLUMNS
+	for role in npc_columns:
+		_check(npc_cells.has(role), "%s has no cell in the npc sheet" % role)
 
 	# Every map's tiles must exist in the atlas.
 	for map in _db.maps:
@@ -666,6 +699,45 @@ func _test_art_sheets() -> void:
 			highest = maxi(highest, value)
 		_check(highest < Terrain.Type.size(),
 				"%s uses terrain id %d which has no tile" % [map.id, highest])
+
+
+func _check_sheet(name: StringName) -> void:
+	var spec := ArtSpec.sheet(name)
+	var path: String = spec["path"]
+	var image := _sheet(path)
+	_check(image != null, "%s is missing" % path)
+	if image == null:
+		return
+
+	var expected := ArtSpec.pixel_size(name)
+	var actual := Vector2i(image.get_width(), image.get_height())
+	_check(actual == expected,
+			"%s is %dx%d, expected %dx%d (%d cells of %dpx)"
+			% [path, actual.x, actual.y, expected.x, expected.y,
+				spec["cells"].size(), spec["cell"]])
+	if actual != expected:
+		return
+
+	# An empty cell is a pack that ran out of art before it ran out of slots.
+	# An opaque cell on a sprite sheet is a subject carrying its background.
+	for index in spec["cells"].size():
+		var rect := ArtSpec.cell_rect(name, index)
+		var label: String = spec["cells"][index]
+		var opaque_pixels := 0
+		for y in rect.size.y:
+			for x in rect.size.x:
+				if image.get_pixel(rect.position.x + x, rect.position.y + y).a > 0.02:
+					opaque_pixels += 1
+		var total := rect.size.x * rect.size.y
+		if bool(spec["opaque"]):
+			_check(opaque_pixels == total,
+					"%s cell %s has %d transparent pixels; terrain tiles must fill"
+					% [path, label, total - opaque_pixels])
+		else:
+			_check(opaque_pixels > 0, "%s cell %s is empty" % [path, label])
+			_check(opaque_pixels < total,
+					"%s cell %s has no transparency; it will draw its own background"
+					% [path, label])
 
 
 # --- 설정 / 타이틀 --------------------------------------------------------
@@ -755,7 +827,7 @@ func _test_title_screen() -> void:
 	_check(menu.is_open(), "the title menu never opened")
 	var labels: Array = menu.get("_labels")
 	var enabled: Array = menu.get("_enabled")
-	_check(labels.size() == 4, "title menu has %d entries" % labels.size())
+	_check(labels.size() == 5, "title menu has %d entries" % labels.size())
 	_check(labels[0] == Loc.t("TITLE_CONTINUE"),
 			"the first title entry is %s" % labels[0])
 	_check(enabled.size() > 0 and not enabled[0],

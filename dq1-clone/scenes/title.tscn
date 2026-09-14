@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/title.gd" id="1_title"]
 [ext_resource type="Script" path="res://view_2d/ui/title_backdrop.gd" id="2_back"]
 [ext_resource type="Script" path="res://view_2d/ui/command_window.gd" id="3_cmd"]
 [ext_resource type="Script" path="res://view_2d/ui/settings_window.gd" id="4_set"]
+[ext_resource type="Script" path="res://view_2d/ui/credits_window.gd" id="5_credits"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
 font_size = 26
@@ -76,3 +77,11 @@ offset_right = 354.0
 offset_bottom = 280.0
 mouse_filter = 2
 script = ExtResource("4_set")
+
+[node name="Credits" type="Control" parent="."]
+offset_left = 64.0
+offset_top = 120.0
+offset_right = 448.0
+offset_bottom = 320.0
+mouse_filter = 2
+script = ExtResource("5_credits")

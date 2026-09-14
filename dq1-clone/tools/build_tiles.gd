@@ -8,12 +8,12 @@
 ## changed on every build would make every commit look like an art change.
 extends SceneTree
 
-const TILE := 16
-const OUT_PATH := "res://view_2d/field/terrain_tiles.png"
+const TILE := ArtSpec.TILE
+const OUT_PATH: String = ArtSpec.SHEETS[&"tiles"]["path"]
 ## Upright versions of the tiles that become billboards in the 2.5D view.
 ## Same motifs, transparent background — a standing billboard must not carry
 ## its own patch of ground with it.
-const PROPS_PATH := "res://view_2d/field/terrain_props.png"
+const PROPS_PATH: String = ArtSpec.SHEETS[&"props"]["path"]
 const PROPS := ["tree", "house", "cave", "door", "chest"]
 const SEED := 611
 
