@@ -115,11 +115,11 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 2,896 checks (플레이스루 64건 별도)
+# 상시 검증 — 합계 2,898 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
-$G --headless --path . --script res://tools/test_presentation.gd  # 1500
+$G --headless --path . --script res://tools/test_presentation.gd  # 1502
 
 # 전체 플레이스루를 두 렌더러 × 두 언어 모두에 대해 (각 16)
 $G --headless --path . --script res://tools/smoke_view.gd

@@ -25,10 +25,11 @@ var language: int = DEFAULT_LANGUAGE
 
 const LOCALES := ["ko", "en"]
 const LOCALE_KEYS := ["SET_LANG_KO", "SET_LANG_EN"]
-## This is a Korean game that also ships English, not the other way round.
-## Following the OS instead put an English title screen in front of anyone
-## whose machine was not set to Korean, which is not what the game is for.
-## An English-language machine still gets English; everything else gets Korean.
+## This is a Korean game that also ships English, not the other way round, so
+## the first run is Korean and nothing about the machine changes that. Reading
+## the OS language was tried first and put an English title screen in front of
+## anyone whose desktop was not set to Korean — which is most desktops, and is
+## not what the game is for. English is one keypress away in the settings.
 const DEFAULT_LANGUAGE := 0
 
 const VIEW_NAMES := ["2D", "2.5D"]
@@ -50,8 +51,6 @@ func load_settings() -> void:
 		text_speed = clampi(int(config.get_value("text", "speed", 1)), 0, 2)
 		view_mode = clampi(int(config.get_value("video", "view_mode", 0)), 0, 1)
 		language = _stored_language(config)
-	else:
-		language = _system_language()
 	apply()
 
 
@@ -63,12 +62,7 @@ func _stored_language(config: ConfigFile) -> int:
 		var found: int = LOCALES.find(stored)
 		if found >= 0:
 			return found
-	return _system_language()
-
-
-## First run: Korean unless the machine explicitly asks for English.
-func _system_language() -> int:
-	return 1 if OS.get_locale_language() == "en" else DEFAULT_LANGUAGE
+	return DEFAULT_LANGUAGE
 
 
 func save_settings() -> void:

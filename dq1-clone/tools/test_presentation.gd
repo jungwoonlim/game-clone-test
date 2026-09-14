@@ -628,10 +628,19 @@ func _test_settings_round_trip() -> void:
 func _test_language_setting(settings: Node) -> void:
 	var chosen: int = settings.language
 
-	# Korean is the default. The game shipped English-first once, and anybody
-	# whose machine was not set to Korean got an English title screen.
+	# Korean is the default, and no property of the machine changes that. The
+	# game read the OS language once and put an English title screen in front
+	# of every desktop that was not set to Korean.
 	_check(settings.LOCALES[settings.DEFAULT_LANGUAGE] == "ko",
 			"the default language is %s" % settings.LOCALES[settings.DEFAULT_LANGUAGE])
+	var scratch := ConfigFile.new()
+	_check(settings._stored_language(scratch) == settings.DEFAULT_LANGUAGE,
+			"a fresh install does not start in Korean")
+	# An old file stored the index rather than the code; it must not be read
+	# as a language, or upgrading would flip whoever had chosen Korean.
+	scratch.set_value("text", "language", 1)
+	_check(settings._stored_language(scratch) == settings.DEFAULT_LANGUAGE,
+			"an old numeric language setting was read as a language")
 
 	# The file stores the locale code. Storing the index meant reordering
 	# LOCALES would quietly switch a saved language to a different one.

@@ -62,7 +62,7 @@ dq1-clone/
     ├── validate_data.gd       데이터 정합성 (649 checks)
     ├── test_core.gd           core 동작 (239 checks)
     ├── test_architecture.gd   core/view 규칙 검사 (508 checks)
-    ├── test_presentation.gd   에셋·설정·연출·번역 (1,500 checks)
+    ├── test_presentation.gd   에셋·설정·연출·번역 (1,502 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
     ├── fuzz_core.gd           무작위 행동 퍼징 + 불변식 (약 230만 checks)
     ├── capture_screens.gd     docs/ 스크린샷 재생성
