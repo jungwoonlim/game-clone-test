@@ -6,7 +6,7 @@
 - 매치업당 전투 수: **120**
 - 플레이어 정책: HP가 35% 미만이면 회복 주문, 아니면 통상 공격
 - 장비 가정: Lv3 Club+Clothes, Lv7 Sword+Leather Armor, Lv12 Sword+Leather Armor+Small Shield, Lv17 Broad Blade+Plate Armor+Small Shield, Lv24 Broad Blade+Plate Armor+Large Shield
-- 소요 시간: 3.4s
+- 소요 시간: 3.6s
 
 ## 보스 격파 가능 레벨
 

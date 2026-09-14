@@ -147,11 +147,11 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 2,907 checks (플레이스루 64건 별도)
+# 상시 검증 — 합계 2,925 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
-$G --headless --path . --script res://tools/test_presentation.gd  # 1511
+$G --headless --path . --script res://tools/test_presentation.gd  # 1529
 
 # 실제 키 입력 퍼징 — 씬 3개 × 시드 8개
 tools/fuzz_input.sh

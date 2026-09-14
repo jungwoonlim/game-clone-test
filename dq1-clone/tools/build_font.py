@@ -28,9 +28,11 @@ OUT_DIR = ROOT / "assets" / "fonts"
 
 # Resolved from https://fonts.googleapis.com/css?family=Noto+Sans+KR&subset=korean
 BASE = "https://fonts.gstatic.com/s/notosanskr/v39/"
+# One weight. A bold was fetched and committed at first, and then nothing ever
+# asked for it -- the UI draws every window in the one face. It is easier to
+# add a weight back than to explain a file in the repository nobody reads.
 WEIGHTS = {
     "Regular": BASE + "PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoySLng9A.ttf",
-    "Bold": BASE + "PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzg01SLng9A.ttf",
 }
 
 # Punctuation the string table may grow into. The menu cursor and the volume

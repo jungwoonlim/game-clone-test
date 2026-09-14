@@ -52,6 +52,7 @@ func _run() -> void:
 	_test_josa()
 	_test_font_covers_every_character()
 	_test_theme_is_self_contained()
+	_test_no_stray_imports()
 	await _test_overlapping_flows()
 	_test_message_window_forgets()
 	await _test_system_menu()
@@ -448,6 +449,44 @@ func _test_theme_is_self_contained() -> void:
 		_check(theme.default_font.fallbacks.is_empty(),
 				"the theme font falls back on %d other fonts"
 				% theme.default_font.fallbacks.size())
+
+
+## Every file Godot imports costs import time and a baked copy under .godot/,
+## and shows up in the editor as if the game used it. The screenshots in docs/
+## are documentation: thirteen of them were being turned into game textures,
+## 1.1 MB of import cache for pictures nothing loads. A .gdignore there tells
+## the engine to skip the folder. An .import whose source is gone is the other
+## half of the same mess — a leftover from a file that was deleted.
+func _test_no_stray_imports() -> void:
+	_check(FileAccess.file_exists("res://docs/.gdignore"),
+			"docs/ has no .gdignore, so its images are imported as game assets")
+
+	var imports := _files_under("res://", ".import")
+	_check(imports.size() > 4, "only %d .import files found; the sweep is broken"
+			% imports.size())
+	for path in imports:
+		var source := path.trim_suffix(".import")
+		_check(FileAccess.file_exists(source),
+				"%s is left over; %s does not exist" % [path, source])
+		_check(not source.begins_with("res://docs/"),
+				"%s is under docs/ and should not be imported" % source)
+
+
+## Every file under `path` ending in `suffix`, .godot excluded — that folder is
+## the import cache itself, not project content.
+func _files_under(path: String, suffix: String) -> Array[String]:
+	var out: Array[String] = []
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return out
+	for file in dir.get_files():
+		if file.ends_with(suffix):
+			out.append(path.path_join(file))
+	for sub in dir.get_directories():
+		if sub == ".godot":
+			continue
+		out.append_array(_files_under(path.path_join(sub), suffix))
+	return out
 
 
 ## A key is a table key when it is one of the prefixes the table uses. This
