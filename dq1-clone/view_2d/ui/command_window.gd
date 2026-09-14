@@ -8,6 +8,8 @@ signal chosen(index: int)
 
 ## How far the labels sit from the frame, leaving room for the cursor.
 const TEXT_INDENT := 14.0
+## Not an index and not a cancel: this key was not a choice at all.
+const NO_CHOICE := -2
 const DISABLED := Color(0.45, 0.45, 0.42)
 
 var _labels: Array[String] = []
@@ -77,6 +79,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _open or not (event is InputEventKey) or not event.pressed:
 		return
 
+	var choice := NO_CHOICE
 	var handled := true
 	match event.keycode:
 		KEY_UP, KEY_W:
@@ -85,16 +88,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			_move(1)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_Z:
 			if _is_enabled(_index):
-				sfx("sfx_confirm")
-				chosen.emit(_index)
+				choice = _index
 		KEY_ESCAPE, KEY_X, KEY_BACKSPACE:
 			if _cancellable:
-				sfx("sfx_cancel")
-				chosen.emit(-1)
+				choice = -1
 		_:
 			handled = false
+
+	# The viewport is told first and the signal goes out last, and the order
+	# is the whole point. `chosen` resumes whoever was awaiting this menu, and
+	# it resumes them here, inside this call — so a menu entry that quits the
+	# game or returns to the title takes this node out of the tree before the
+	# line after the emit ever runs. Reaching for the viewport then fails on a
+	# null. The key was handled either way, so mark it while we still can.
 	if handled:
 		get_viewport().set_input_as_handled()
+	if choice != NO_CHOICE:
+		sfx("sfx_confirm" if choice >= 0 else "sfx_cancel")
+		chosen.emit(choice)
 
 
 ## Skips over greyed-out entries so the cursor never rests on a dead option.

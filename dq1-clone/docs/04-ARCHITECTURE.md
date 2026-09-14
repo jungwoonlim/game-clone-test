@@ -65,6 +65,8 @@ dq1-clone/
     ├── test_presentation.gd   에셋·설정·연출·번역 (1,511 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
     ├── fuzz_core.gd           무작위 행동 퍼징 + 불변식 (약 230만 checks)
+    ├── fuzz_input.gd          실제 키 입력 퍼징
+    ├── fuzz_input.sh          위를 씬·시드별로 돌리고 판정
     ├── capture_screens.gd     docs/ 스크린샷 재생성
     └── smoke_view.gd          전체 플레이스루 (16 checks, 씬과 언어를 인자로)
 ```

@@ -42,6 +42,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _open or not (event is InputEventKey) or not event.pressed:
 		return
 
+	var close := ""
 	var handled := true
 	match event.keycode:
 		KEY_UP, KEY_W:
@@ -56,18 +57,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			_adjust(1)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_Z:
 			if _index == Row.BACK:
-				sfx("sfx_confirm")
-				closed.emit()
+				close = "sfx_confirm"
 			else:
 				_adjust(1)
 		KEY_ESCAPE, KEY_X, KEY_BACKSPACE:
-			sfx("sfx_cancel")
-			closed.emit()
+			close = "sfx_cancel"
 		_:
 			handled = false
+
+	# Same order as CommandWindow, for the same reason: `closed` resumes the
+	# caller inside this call, and that caller can leave the tree.
 	if handled:
 		get_viewport().set_input_as_handled()
 		queue_redraw()
+	if close != "":
+		sfx(close)
+		closed.emit()
 
 
 func _adjust(direction: int) -> void:

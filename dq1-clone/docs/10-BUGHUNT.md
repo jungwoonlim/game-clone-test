@@ -95,6 +95,37 @@
 (`tools/test_core.gd`의 `_test_consumables_are_not_wasted`,
 `_test_outside_leaves_the_dungeon`, `_test_light_sources_do_not_dim_each_other`).
 
+## 나중에 추가된 것: 입력 퍼저
+
+플레이 중에 이런 에러가 보고됐습니다.
+
+```
+SCRIPT ERROR: Cannot call method 'set_input_as_handled' on a null value.
+          at: CommandWindow._unhandled_input (command_window.gd:97)
+```
+
+`chosen.emit()` 이 **메뉴를 기다리던 쪽을 그 자리에서 재개**시킵니다. 시그널
+발신은 동기이므로, `await _submenu.open_menu(...)` 하던 코드가 emit 한복판에서
+이어 달립니다. 그게 "게임 종료"나 "타이틀로" 였으면 이 노드는 트리에서 빠지고,
+emit 다음 줄의 `get_viewport()` 는 null 입니다.
+
+고치는 방법은 순서를 뒤집는 것입니다 — **뷰포트에 먼저 알리고, 시그널을 마지막에
+보냅니다.** 키가 처리된 건 어느 쪽이든 사실이고, 아직 트리 안에 있을 때 말해두면
+됩니다.
+
+### 왜 기존 테스트가 전부 통과했나
+
+`smoke_view.gd` 는 메뉴를 `chosen.emit(index)` 로 고릅니다. 플레이어와 결과는
+같지만 **경로가 다릅니다** — `_unhandled_input` 을 아예 거치지 않습니다. 그러니
+그 함수 안에서만 터지는 버그는 정의상 잡힐 수 없었습니다. 1,500개 넘는 검사가
+한 번도 실행하지 않은 코드가 있었던 것입니다.
+
+`tools/fuzz_input.gd` 는 `Input.parse_input_event` 로 **진짜 키 이벤트**를
+무작위로 흘려보냅니다. 판정은 엔진이 stderr 에 찍는 SCRIPT ERROR 이고, GDScript
+안에서는 그걸 볼 수 없으므로 `tools/fuzz_input.sh` 가 밖에서 봅니다.
+
+시드 3이 위 버그를 재현했고, 고친 뒤 씬 3개 × 시드 8개 = 24회가 전부 깨끗합니다.
+
 ## 수정 후 전체 검증
 
 ```

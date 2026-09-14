@@ -153,6 +153,9 @@ $G --headless --path . --script res://tools/test_core.gd          # 239
 $G --headless --path . --script res://tools/test_architecture.gd  # 508
 $G --headless --path . --script res://tools/test_presentation.gd  # 1511
 
+# 실제 키 입력 퍼징 — 씬 3개 × 시드 8개
+tools/fuzz_input.sh
+
 # 전체 플레이스루를 두 렌더러 × 두 언어 모두에 대해 (각 16)
 $G --headless --path . --script res://tools/smoke_view.gd
 $G --headless --path . --script res://tools/smoke_view.gd -- ko
@@ -174,6 +177,11 @@ xvfb-run -a $G --path . --rendering-driver opengl3 \
 장착 슬롯의 종류, 파티가 서 있는 칸의 통행 가능 여부, 그리고 거래·부활·상자의 보존 법칙.
 실패하면 **시드와 스텝 번호**를 찍어 그대로 재현할 수 있습니다. 무엇을 잡았는지는
 [docs/10-BUGHUNT.md](docs/10-BUGHUNT.md).
+
+`fuzz_input.sh`는 **진짜 키 이벤트를 무작위로 퍼붓습니다.** `smoke_view.gd`가
+메뉴를 `chosen.emit()`으로 고르는 것과 다릅니다 — 결과는 같지만 입력 처리기를
+통째로 건너뛰므로, `_unhandled_input` 안에서만 터지는 버그는 스모크 테스트를
+전부 통과합니다. 실제로 그런 버그가 하나 있었고(아래), 이 도구가 잡았습니다.
 
 `smoke_view.gd`는 **실제 씬을 띄워 프레임 단위로 플레이합니다** — 곤봉을 사고, 장비하고,
 여관에서 자고, 왕에게 세이브하고, 마을을 나가 전투를 치르고, 던전에서 상자를 열고,
