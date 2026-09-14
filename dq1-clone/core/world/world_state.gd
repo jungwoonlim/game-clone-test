@@ -10,13 +10,23 @@ signal map_changed(map_id: StringName, cell: Vector2i)
 signal terrain_damaged(amount: int)
 signal encounter_started(monster_id: StringName)
 signal hero_collapsed()
+signal light_faded()
 
 var map: MapData = null
 var cell: Vector2i = Vector2i.ZERO
+## Last direction the party tried to move, including into a wall — this is
+## what TALK and SEARCH act on.
+var facing: Vector2i = Vector2i.DOWN
 var steps: int = 0
 var repel_steps: int = 0
+## Extra sight radius from a torch or Radiant, and how many steps it lasts.
+var light_bonus: int = 0
+var light_steps: int = 0
 ## Switched off by tools that want to walk a map without being interrupted.
 var encounters_enabled: bool = true
+## Whether this map's boss fight is still pending. The session sets it from
+## its flags whenever the map changes.
+var boss_available: bool = false
 
 var _db: GameDatabase
 var _hero: Hero
@@ -43,14 +53,31 @@ func terrain_here() -> int:
 	return map.tile_at(cell) if map != null else -1
 
 
+## How far the party can see here. 0 means the whole map is lit.
+func sight_radius() -> int:
+	if map == null or not map.is_dungeon:
+		return 0
+	return maxi(1, map.base_sight_radius + light_bonus)
+
+
+## Whoever is standing on the tile the party faces, or null.
+func npc_in_front() -> NpcPlacement:
+	if map == null:
+		return null
+	return map.npc_at(cell + facing)
+
+
 ## Attempts one grid step. Returns true when the party actually moved.
 func try_move(direction: Vector2i) -> bool:
 	if map == null:
 		return false
 
+	if direction != Vector2i.ZERO:
+		facing = direction
+
 	var target := cell + direction
 	var terrain := map.tile_at(target)
-	if terrain < 0 or not Terrain.is_passable(terrain):
+	if terrain < 0 or not Terrain.is_passable(terrain) or map.npc_at(target) != null:
 		move_blocked.emit(target)
 		return false
 
@@ -58,13 +85,29 @@ func try_move(direction: Vector2i) -> bool:
 	steps += 1
 	if repel_steps > 0:
 		repel_steps -= 1
+	if light_steps > 0:
+		light_steps -= 1
+		if light_steps == 0:
+			light_bonus = 0
+			light_faded.emit()
 	moved.emit(cell, terrain)
 
 	if _apply_terrain_damage(terrain):
 		return true
 	if _apply_warp():
 		return true
+	# A set-piece fight wins over the random roll on the same step, otherwise
+	# a slime can gatecrash the Dragonlord's throne room.
+	if _trigger_boss():
+		return true
 	_roll_encounter(terrain)
+	return true
+
+
+func _trigger_boss() -> bool:
+	if not boss_available or map.boss_monster == &"" or map.boss_cell != cell:
+		return false
+	encounter_started.emit(map.boss_monster)
 	return true
 
 

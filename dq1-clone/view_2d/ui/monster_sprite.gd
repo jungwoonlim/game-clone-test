@@ -6,6 +6,38 @@ var _body: Color = Color.WHITE
 var _accent: Color = Color.BLACK
 var _horns: bool = false
 var _ready_to_draw: bool = false
+var _home: Vector2 = Vector2.ZERO
+var _tween: Tween = null
+
+
+func _ready() -> void:
+	_home = position
+
+
+## Recoil plus a white flash. Long enough to read, short enough not to drag.
+func play_hit() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	position = _home
+	modulate = Color(2.2, 2.2, 2.2)
+	_tween = create_tween()
+	_tween.tween_property(self, "modulate", Color.WHITE, 0.18)
+	_tween.parallel().tween_property(self, "position", _home + Vector2(5, 0), 0.05)
+	_tween.parallel().tween_property(self, "position", _home, 0.18).set_delay(0.05)
+
+
+func play_defeat() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_tween = create_tween()
+	_tween.tween_property(self, "modulate:a", 0.0, 0.35)
+
+
+func reset_presentation() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	position = _home
+	modulate = Color.WHITE
 
 
 func set_monster(data: MonsterData) -> void:

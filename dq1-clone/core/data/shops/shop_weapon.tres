@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/shop_data.gd" id="1_gc8af"]
+
+[resource]
+script = ExtResource("1_gc8af")
+id = &"shop_weapon"
+display_name = "Weapon Shop"
+kind = "weapon"
+stock = Array[StringName]([&"w_club", &"w_sword", &"w_blade"])

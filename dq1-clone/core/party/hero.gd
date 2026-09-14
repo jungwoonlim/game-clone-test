@@ -18,6 +18,8 @@ var max_mp: int = 0
 var hp: int = 1
 var mp: int = 0
 
+const INVENTORY_MAX := 10
+
 var weapon_id: StringName = &""
 var armor_id: StringName = &""
 var shield_id: StringName = &""
@@ -54,6 +56,52 @@ func apply_level(curve: LevelCurve, new_level: int, restore: bool = false) -> vo
 		# A level-up grants the difference, it does not top you up.
 		hp = clampi(hp + maxi(0, max_hp - previous_max_hp), 1, max_hp)
 		mp = clampi(mp + maxi(0, max_mp - previous_max_mp), 0, max_mp)
+
+
+# --- 소지품 ---------------------------------------------------------------
+
+func has_room() -> bool:
+	return inventory.size() < INVENTORY_MAX
+
+
+func add_item(id: StringName) -> bool:
+	if not has_room():
+		return false
+	inventory.append(id)
+	return true
+
+
+func remove_item(id: StringName) -> bool:
+	var index := inventory.find(id)
+	if index < 0:
+		return false
+	inventory.remove_at(index)
+	return true
+
+
+func has_item(id: StringName) -> bool:
+	return inventory.has(id)
+
+
+func equipped_id(kind: String) -> StringName:
+	match kind:
+		"weapon":
+			return weapon_id
+		"armor":
+			return armor_id
+		"shield":
+			return shield_id
+	return &""
+
+
+func set_equipped(kind: String, id: StringName) -> void:
+	match kind:
+		"weapon":
+			weapon_id = id
+		"armor":
+			armor_id = id
+		"shield":
+			shield_id = id
 
 
 func attack_power(db: GameDatabase) -> int:

@@ -27,6 +27,14 @@ extends Resource
 @export_group("Contents")
 @export var warps: Array[WarpPoint] = []
 @export var npcs: Array[NpcPlacement] = []
+@export var chests: Array[ChestPlacement] = []
+
+@export_group("Boss")
+## Stepping here starts a fixed fight, once. (-1,-1) means the map has no boss.
+@export var boss_cell: Vector2i = Vector2i(-1, -1)
+@export var boss_monster: StringName = &""
+## Set once the boss is beaten, so the fight never repeats.
+@export var boss_flag: StringName = &""
 
 ## Where the party appears when the game starts on this map.
 @export var default_spawn: Vector2i = Vector2i.ZERO
@@ -52,6 +60,13 @@ func warp_at(cell: Vector2i) -> WarpPoint:
 	for warp in warps:
 		if warp.from_cell == cell:
 			return warp
+	return null
+
+
+func chest_at(cell: Vector2i) -> ChestPlacement:
+	for chest in chests:
+		if chest.cell == cell:
+			return chest
 	return null
 
 

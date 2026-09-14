@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cygf4spwl1gg1"
-path="res://.godot/imported/screenshot-battle.png-8f7e6a98425d419a7d9de55d1765b4c4.ctex"
+uid="uid://gdh4sxtk20xx"
+path="res://.godot/imported/screenshot-dungeon.png-d3d6cc3e5acb76c5f2e7ac14febafdb8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/screenshot-battle.png"
-dest_files=["res://.godot/imported/screenshot-battle.png-8f7e6a98425d419a7d9de55d1765b4c4.ctex"]
+source_file="res://docs/screenshot-dungeon.png"
+dest_files=["res://.godot/imported/screenshot-dungeon.png-d3d6cc3e5acb76c5f2e7ac14febafdb8.ctex"]
 
 [params]
 

@@ -18,6 +18,7 @@ enum Type {
 	STAIRS_DOWN,
 	STAIRS_UP,
 	DOOR,
+	CHEST,
 }
 
 ## HP lost on stepping onto a swamp tile.

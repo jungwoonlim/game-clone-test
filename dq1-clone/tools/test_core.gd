@@ -34,6 +34,18 @@ func _initialize() -> void:
 	_test_map_round_trip()
 	_test_death()
 	_test_battle_text()
+	_test_npc_blocking()
+	_test_dialogue_flags()
+	_test_shopping()
+	_test_inventory_limit()
+	_test_inn()
+	_test_field_spells()
+	_test_battle_item_is_consumed()
+	_test_save_round_trip()
+	_test_chests()
+	_test_dungeon_sight()
+	_test_boss_trigger()
+	_test_boss_transformation()
 
 	print("[test] %d checks, %d failures" % [_checks, _failures.size()])
 	for failure in _failures:
@@ -65,6 +77,321 @@ func _test_battle_text() -> void:
 		if BattleText.describe(event, "You", "Slime") == "":
 			silent.append(BattleEvent.Kind.keys()[kind])
 	_check(silent.is_empty(), "no text for event kinds: %s" % [silent])
+
+
+# --- M4: 마을 -------------------------------------------------------------
+
+func _test_npc_blocking() -> void:
+	var session := _new_session()
+	var town := _db.map(&"town")
+	var king := town.npc_at(Vector2i(16, 2))
+	_check(king != null, "the King is not where the data says")
+	if king == null:
+		return
+
+	# Stand directly below the King and walk into him.
+	session.world.enter_map(&"town", king.cell + Vector2i.DOWN)
+	_check(not session.try_move(Vector2i.UP), "walked straight through an NPC")
+	_check(session.world.cell == king.cell + Vector2i.DOWN,
+			"position changed when bumping an NPC")
+	_check(session.world.facing == Vector2i.UP, "facing did not follow a blocked move")
+	_check(session.npc_in_front() == king, "npc_in_front did not find the King")
+
+	# And nobody is standing on an impassable tile.
+	for map in _db.maps:
+		for npc in map.npcs:
+			_check(Terrain.is_passable(map.tile_at(npc.cell)),
+					"%s: %s stands in a wall" % [map.id, npc.id])
+
+
+func _test_dialogue_flags() -> void:
+	var session := _new_session()
+	var king := _db.map(&"town").npc_at(Vector2i(16, 2))
+	_check(not session.has_flag(&"heard_quest"), "quest flag set before talking")
+
+	var first := session.talk_to(king)
+	_check(first != null, "the King said nothing")
+	_check(session.has_flag(&"heard_quest"), "talking to the King set no flag")
+	_check(first.lines[0].begins_with("Descendant"),
+			"first King line reads: %s" % first.lines[0])
+
+	var second := session.talk_to(king)
+	_check(second != first, "the King repeated himself after the flag was set")
+
+	# The villager's line flips on the same flag.
+	var villager := _db.map(&"town").npc_at(Vector2i(13, 11))
+	var after := session.talk_to(villager)
+	_check(after.lines[0].begins_with("Thy path"),
+			"villager did not react to the quest flag: %s" % after.lines[0])
+	var fresh := _new_session()
+	var before := fresh.talk_to(villager)
+	_check(before.lines[0].begins_with("The King"),
+			"villager pre-quest line reads: %s" % before.lines[0])
+
+
+func _test_shopping() -> void:
+	var session := _new_session()
+	var hero := session.hero
+	hero.gold = 120
+
+	_check(session.buy(&"w_club") == TownServices.Result.OK, "could not buy a club")
+	_check(hero.gold == 110, "club cost %d gold" % (120 - hero.gold))
+	_check(hero.has_item(&"w_club"), "the club is not in the bag")
+
+	var bare_attack := hero.attack_power(_db)
+	_check(session.equip(&"w_club") == TownServices.Result.OK, "could not equip the club")
+	_check(hero.weapon_id == &"w_club", "the club is not equipped")
+	_check(not hero.has_item(&"w_club"), "an equipped item is still in the bag")
+	_check(hero.attack_power(_db) == bare_attack + 2, "equipping did not raise attack")
+
+	# Swapping returns the old weapon to the bag.
+	session.buy(&"w_sword")
+	_check(session.equip(&"w_sword") == TownServices.Result.OK, "could not equip the sword")
+	_check(hero.has_item(&"w_club"), "the replaced club was destroyed")
+	_check(hero.weapon_id == &"w_sword", "the sword is not equipped")
+
+	var before_sale := hero.gold
+	_check(session.sell(&"w_club") == TownServices.Result.OK, "could not sell the club")
+	_check(hero.gold == before_sale + _db.item(&"w_club").sell_price, "sale paid the wrong amount")
+	_check(not hero.has_item(&"w_club"), "the sold club is still in the bag")
+
+	hero.gold = 0
+	_check(session.buy(&"a_plate") == TownServices.Result.NOT_ENOUGH_GOLD,
+			"bought plate armour with no money")
+	_check(session.equip(&"w_blade") == TownServices.Result.NOT_OWNED,
+			"equipped a weapon that is not owned")
+	hero.add_item(&"herb")
+	_check(session.equip(&"herb") == TownServices.Result.NOT_EQUIPPABLE,
+			"equipped a herb")
+
+
+func _test_inventory_limit() -> void:
+	var session := _new_session()
+	var hero := session.hero
+	hero.gold = 9999
+	for i in Hero.INVENTORY_MAX:
+		_check(session.buy(&"herb") == TownServices.Result.OK,
+				"could not buy herb %d" % i)
+	_check(hero.inventory.size() == Hero.INVENTORY_MAX, "bag holds the wrong count")
+	_check(session.buy(&"herb") == TownServices.Result.INVENTORY_FULL,
+			"bag accepted an eleventh item")
+
+
+func _test_inn() -> void:
+	var session := _new_session()
+	var hero := session.hero
+	hero.gold = 20
+	hero.hp = 1
+	hero.mp = 0
+
+	_check(session.rest(6) == TownServices.Result.OK, "could not rest at the inn")
+	_check(hero.gold == 14, "the inn charged the wrong amount")
+	_check(hero.hp == hero.max_hp and hero.mp == hero.max_mp, "resting did not restore")
+	_check(session.rest(6) == TownServices.Result.ALREADY_FULL_HEALTH,
+			"the inn charged a healthy traveller")
+	hero.hp = 1
+	hero.gold = 2
+	_check(session.rest(6) == TownServices.Result.NOT_ENOUGH_GOLD,
+			"the inn let a pauper stay")
+	_check(hero.hp == 1, "the refused rest healed anyway")
+
+
+func _test_field_spells() -> void:
+	var session := _new_session()
+	var hero := session.hero
+
+	_check(session.cast_in_field(&"heal")["result"] == GameSession.FieldSpell.NOT_KNOWN,
+			"a level 1 hero cast Heal")
+
+	hero.apply_level(_db.level_curve, 5, true)
+	hero.hp = 1
+	var before_mp := hero.mp
+	var healed: Dictionary = session.cast_in_field(&"heal")
+	_check(healed["result"] == GameSession.FieldSpell.OK, "Heal failed in the field")
+	_check(hero.hp > 1, "Heal restored nothing")
+	_check(hero.mp == before_mp - _db.spell(&"heal").mp_cost, "Heal cost the wrong MP")
+
+	hero.hp = hero.max_hp
+	before_mp = hero.mp
+	_check(session.cast_in_field(&"heal")["result"] == GameSession.FieldSpell.NO_EFFECT,
+			"Heal at full HP was allowed")
+	_check(hero.mp == before_mp, "a wasted Heal still cost MP")
+
+	hero.apply_level(_db.level_curve, 16, true)
+	_check(session.cast_in_field(&"repel")["result"] == GameSession.FieldSpell.OK,
+			"Repel failed")
+	_check(session.world.repel_steps > 0, "Repel set no duration")
+
+	session.world.enter_map(&"field", Vector2i(20, 23))
+	_check(session.cast_in_field(&"radiant")["result"] == GameSession.FieldSpell.NOT_HERE,
+			"Radiant worked in daylight")
+
+	session.world.enter_map(&"field", Vector2i(36, 11))
+	_check(session.cast_in_field(&"return")["result"] == GameSession.FieldSpell.OK,
+			"Return failed")
+	_check(session.world.map.id == _db.start_map, "Return went somewhere else")
+
+
+func _test_battle_item_is_consumed() -> void:
+	var session := _new_session(31)
+	session.hero.apply_level(_db.level_curve, 8, true)
+	session.hero.hp = 5
+	session.hero.add_item(&"herb")
+	session.begin_battle(&"m_slime")
+	session.battle_command(BattleState.Command.ITEM, &"herb")
+	_check(not session.hero.has_item(&"herb"), "using a herb did not spend it")
+	_check(session.hero.hp > 5, "the herb healed nothing")
+
+
+func _test_save_round_trip() -> void:
+	SaveGame.erase()
+	var first := _new_session()
+	Progression.award(first.hero, _db, 3000, 500)
+	first.hero.add_item(&"herb")
+	first.buy(&"w_club")
+	first.equip(&"w_club")
+	first.set_flag(&"heard_quest")
+	first.world.enter_map(&"field", Vector2i(24, 20))
+	first.world.steps = 777
+	_check(first.save_game() == OK, "saving failed")
+	_check(first.has_save(), "save file is missing after saving")
+
+	var restored := _new_session()
+	_check(restored.load_game(), "loading failed")
+	_check(restored.hero.level == first.hero.level,
+			"level %d != %d" % [restored.hero.level, first.hero.level])
+	_check(restored.hero.gold == first.hero.gold, "gold did not survive the save")
+	_check(restored.hero.weapon_id == &"w_club", "equipment did not survive the save")
+	_check(restored.hero.has_item(&"herb"), "the bag did not survive the save")
+	_check(restored.has_flag(&"heard_quest"), "flags did not survive the save")
+	_check(restored.world.map.id == &"field", "map did not survive the save")
+	_check(restored.world.cell == Vector2i(24, 20), "position did not survive the save")
+	_check(restored.world.steps == 777, "step count did not survive the save")
+
+	SaveGame.erase()
+	_check(not SaveGame.has_save(), "erase left the save behind")
+	_check(not _new_session().load_game(), "loading succeeded with no save file")
+
+
+# --- M5: 던전 -------------------------------------------------------------
+
+func _test_chests() -> void:
+	var session := _new_session()
+	var chest := _db.map(&"dungeon").chests[0]
+	session.world.enter_map(&"dungeon", chest.cell)
+
+	var before := session.hero.gold
+	var opened: Dictionary = session.open_chest_here()
+	_check(opened["found"], "no chest where the data says one is")
+	_check(not opened["empty"], "a fresh chest reported as empty")
+	_check(int(opened["gold"]) == chest.gold, "the chest paid the wrong amount")
+	_check(session.hero.gold == before + chest.gold, "chest gold never arrived")
+	_check(session.has_flag(chest.flag_for(&"dungeon")), "opening set no flag")
+
+	# Opening it again must not pay out twice, or a save-scummer gets rich.
+	var again: Dictionary = session.open_chest_here()
+	_check(again["empty"], "the same chest paid twice")
+	_check(session.hero.gold == before + chest.gold, "reopening added gold")
+
+	session.world.cell = chest.cell + Vector2i.LEFT
+	_check(not session.open_chest_here()["found"], "found a chest on a bare tile")
+
+	# An item chest with a full bag leaves the item in place.
+	var full_session := _new_session()
+	var item_chest := _db.map(&"dungeon_b2").chests[0]
+	_check(item_chest.item_id != &"", "the B2 chest is supposed to hold an item")
+	for i in Hero.INVENTORY_MAX:
+		full_session.hero.add_item(&"herb")
+	full_session.world.enter_map(&"dungeon_b2", item_chest.cell)
+	var blocked: Dictionary = full_session.open_chest_here()
+	_check(blocked["full"], "a full bag still accepted a chest item")
+	_check(not full_session.has_flag(item_chest.flag_for(&"dungeon_b2")),
+			"a refused chest was marked as opened")
+
+
+func _test_dungeon_sight() -> void:
+	var session := _new_session()
+	session.world.enter_map(&"field", Vector2i(20, 23))
+	_check(session.world.sight_radius() == 0, "the overworld is not fully lit")
+
+	session.world.enter_map(&"dungeon", Vector2i(5, 5))
+	var base := session.world.sight_radius()
+	_check(base > 0, "the dungeon is fully lit")
+	_check(base == _db.map(&"dungeon").base_sight_radius,
+			"dungeon sight does not match the map data")
+
+	session.hero.add_item(&"torch")
+	var used: Dictionary = session.use_item_in_field(&"torch")
+	_check(String(used["effect"]) == "light", "the torch did not light anything")
+	_check(session.world.sight_radius() > base, "the torch widened nothing")
+	_check(not session.hero.has_item(&"torch"), "the torch was not consumed")
+
+	# It burns down as you walk.
+	var steps := int(used["amount"]) + 2
+	for i in steps:
+		session.world.cell = Vector2i(5, 5)
+		session.try_move(Vector2i.RIGHT)
+	_check(session.world.sight_radius() == base, "the torch never burned out")
+
+	var outdoors := _new_session()
+	outdoors.world.enter_map(&"field", Vector2i(20, 23))
+	outdoors.hero.add_item(&"torch")
+	_check(String(outdoors.use_item_in_field(&"torch")["effect"]) == "none",
+			"a torch was lit in daylight")
+	_check(outdoors.hero.has_item(&"torch"), "a wasted torch was consumed anyway")
+
+
+func _test_boss_trigger() -> void:
+	var session := _new_session()
+	var map := _db.map(&"dungeon_b2")
+	var seen: Array[StringName] = []
+	session.encounter_started.connect(func(id: StringName) -> void: seen.append(id))
+
+	session.world.enter_map(&"dungeon_b2", map.boss_cell + Vector2i.LEFT)
+	_check(session.world.boss_available, "the boss is not armed on arrival")
+	session.try_move(Vector2i.RIGHT)
+	_check(seen.size() == 1 and seen[0] == map.boss_monster,
+			"stepping on the throne started %s" % [seen])
+
+	# Winning records the flag and disarms the trigger.
+	session.set_flag(map.boss_flag)
+	session.world.enter_map(&"dungeon_b2", map.boss_cell + Vector2i.LEFT)
+	_check(not session.world.boss_available, "the boss re-arms after being beaten")
+	seen.clear()
+	session.try_move(Vector2i.RIGHT)
+	_check(seen.is_empty(), "the boss fight repeated after victory")
+
+
+func _test_boss_transformation() -> void:
+	var session := _new_session(4)
+	session.hero.apply_level(_db.level_curve, 30, true)
+	session.hero.weapon_id = &"w_blade"
+	session.hero.armor_id = &"a_plate"
+	session.hero.shield_id = &"s_large"
+	session.begin_battle(&"m_dragonlord")
+
+	var transformed := false
+	var defeated := false
+	for turn in 80:
+		if session.battle == null:
+			break
+		for event in session.battle_command(BattleState.Command.ATTACK):
+			if event.kind == BattleEvent.Kind.MONSTER_TRANSFORMED:
+				_check(not transformed, "the boss transformed twice")
+				_check(not defeated, "the boss transformed after dying")
+				transformed = true
+			if event.kind == BattleEvent.Kind.MONSTER_DEFEATED:
+				defeated = true
+
+	_check(transformed, "the Dragonlord never took its second form")
+	_check(defeated, "the fight never ended")
+
+	# The second form is the one that actually dies.
+	var second := _db.monster(&"m_dragonlord_true")
+	_check(second != null and second.transforms_into == &"",
+			"the second form transforms again")
+	_check(second.is_boss and not second.can_flee_from and not second.can_be_critical,
+			"the second form does not inherit the boss rules")
 
 
 func _check(condition: bool, message: String) -> void:
@@ -423,6 +750,8 @@ func _test_map_round_trip() -> void:
 	var legs := [
 		[&"town", Vector2i(16, 23), &"field", Vector2i(20, 23)],
 		[&"field", Vector2i(36, 10), &"dungeon", Vector2i(5, 5)],
+		[&"dungeon", Vector2i(26, 18), &"dungeon_b2", Vector2i(5, 5)],
+		[&"dungeon_b2", Vector2i(4, 4), &"dungeon", Vector2i(26, 17)],
 		[&"dungeon", Vector2i(4, 4), &"field", Vector2i(36, 11)],
 		[&"field", Vector2i(20, 22), &"town", Vector2i(16, 22)],
 	]
@@ -461,6 +790,9 @@ func _path_to(map: MapData, from: Vector2i, goal: Vector2i) -> Array[Vector2i]:
 				continue
 			var terrain := map.tile_at(next)
 			if terrain < 0 or not Terrain.is_passable(terrain):
+				continue
+			if next != goal and (map.npc_at(next) != null
+					or map.warp_at(next) != null or next == map.boss_cell):
 				continue
 			came_from[next] = cell
 			if next == goal:

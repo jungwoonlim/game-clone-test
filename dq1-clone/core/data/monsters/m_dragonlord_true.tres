@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/data/monster_action.gd" id="1_rhuq7"]
+[ext_resource type="Script" path="res://core/data/monster_data.gd" id="2_5bak5"]
+
+[sub_resource type="Resource" id="Resource_jk3ve"]
+script = ExtResource("1_rhuq7")
+kind = "attack"
+spell_id = &""
+weight = 3
+hp_threshold = 1.0
+
+[sub_resource type="Resource" id="Resource_oknhi"]
+script = ExtResource("1_rhuq7")
+kind = "spell"
+spell_id = &"hurtmore"
+weight = 3
+hp_threshold = 1.0
+
+[sub_resource type="Resource" id="Resource_1efms"]
+script = ExtResource("1_rhuq7")
+kind = "spell"
+spell_id = &"healmore"
+weight = 2
+hp_threshold = 0.35
+
+[resource]
+script = ExtResource("2_5bak5")
+id = &"m_dragonlord_true"
+display_name = "Dragonlord"
+max_hp = 65
+max_mp = 60
+strength = 44
+agility = 40
+exp_reward = 0
+gold_reward_min = 0
+gold_reward_max = 0
+actions = Array[ExtResource("1_rhuq7")]([SubResource("Resource_jk3ve"), SubResource("Resource_oknhi"), SubResource("Resource_1efms")])
+resist_sleep = 255
+resist_stopspell = 255
+resist_hurt = 0.0
+can_flee_from = false
+can_be_critical = false
+is_boss = true
+transforms_into = &""

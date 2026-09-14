@@ -23,6 +23,7 @@ func _initialize() -> void:
 	_check_items(db)
 	_check_monsters(db)
 	_check_encounter_tables(db)
+	_check_shops(db)
 	_check_maps(db)
 	_check_new_game(db)
 
@@ -135,6 +136,24 @@ func _check_monsters(db: GameDatabase) -> void:
 		_expect(monster.agility > 0, "%s has no agility" % monster.id)
 		_expect(monster.gold_reward_min <= monster.gold_reward_max,
 				"%s gold range inverted" % monster.id)
+		if monster.transforms_into != &"":
+			var next := db.monster(monster.transforms_into)
+			_expect(next != null,
+					"%s transforms into unknown monster %s"
+					% [monster.id, monster.transforms_into])
+			_expect(monster.transforms_into != monster.id,
+					"%s transforms into itself" % monster.id)
+			# A cycle here is an unwinnable fight that never reports an error.
+			if next != null:
+				var chain := {monster.id: true}
+				var cursor := next
+				while cursor != null and cursor.transforms_into != &"":
+					if chain.has(cursor.id):
+						break
+					chain[cursor.id] = true
+					cursor = db.monster(cursor.transforms_into)
+				_expect(cursor == null or not chain.has(cursor.id),
+						"%s starts a transformation cycle" % monster.id)
 		_expect(not monster.actions.is_empty(), "%s has no actions" % monster.id)
 
 		var total_weight := 0
@@ -228,14 +247,50 @@ func _check_maps(db: GameDatabase) -> void:
 						"%s -> %s lands on impassable %s"
 						% [map.id, warp.to_map, Terrain.type_name(destination.tile_at(warp.to_cell))])
 
+		var chest_cells := {}
+		for chest in map.chests:
+			_expect(map.in_bounds(chest.cell),
+					"%s chest at %v out of bounds" % [map.id, chest.cell])
+			_expect(not chest_cells.has(chest.cell),
+					"%s has two chests on %v" % [map.id, chest.cell])
+			chest_cells[chest.cell] = true
+			_expect(map.tile_at(chest.cell) == Terrain.Type.CHEST,
+					"%s chest at %v is not drawn as a chest (%s)"
+					% [map.id, chest.cell, Terrain.type_name(map.tile_at(chest.cell))])
+			_expect(chest.gold > 0 or chest.item_id != &"",
+					"%s chest at %v holds nothing" % [map.id, chest.cell])
+			if chest.item_id != &"":
+				_expect(db.item(chest.item_id) != null,
+						"%s chest at %v holds unknown item %s"
+						% [map.id, chest.cell, chest.item_id])
+
+		if map.boss_monster != &"":
+			var boss := db.monster(map.boss_monster)
+			_expect(boss != null,
+					"%s names unknown boss %s" % [map.id, map.boss_monster])
+			_expect(boss == null or boss.is_boss,
+					"%s uses non-boss %s as its boss" % [map.id, map.boss_monster])
+			_expect(map.boss_flag != &"",
+					"%s has a boss with no flag, so it would refight forever" % map.id)
+			_expect(map.in_bounds(map.boss_cell),
+					"%s boss cell %v out of bounds" % [map.id, map.boss_cell])
+			_expect(Terrain.is_passable(map.tile_at(map.boss_cell)),
+					"%s boss cell %v cannot be stepped on" % [map.id, map.boss_cell])
+
 		for npc in map.npcs:
 			_expect(map.in_bounds(npc.cell), "%s npc %s out of bounds" % [map.id, npc.id])
+			_expect(Terrain.is_passable(map.tile_at(npc.cell)),
+					"%s npc %s stands inside a wall" % [map.id, npc.id])
+			_check_npc(db, map, npc)
 
 		_check_reachability(map)
 
 
 ## Flood fill from the spawn. A warp you cannot walk to is a dead end that no
 ## amount of playtesting will reveal until someone tries that exact route.
+##
+## NPCs block movement, so they are walls here — and an NPC parked in a doorway
+## can seal off half a town. That is exactly what this catches.
 func _check_reachability(map: MapData) -> void:
 	var reachable := {}
 	var queue: Array[Vector2i] = [map.default_spawn]
@@ -251,15 +306,73 @@ func _check_reachability(map: MapData) -> void:
 			var terrain := map.tile_at(next)
 			if terrain < 0 or not Terrain.is_passable(terrain):
 				continue
+			if map.npc_at(next) != null:
+				continue
 			reachable[next] = true
 			queue.append(next)
 
 	for warp in map.warps:
 		_expect(reachable.has(warp.from_cell),
 				"%s: warp at %v is unreachable from the spawn" % [map.id, warp.from_cell])
+
+	for chest in map.chests:
+		_expect(reachable.has(chest.cell),
+				"%s: chest at %v is unreachable" % [map.id, chest.cell])
+	if map.boss_monster != &"":
+		_expect(reachable.has(map.boss_cell),
+				"%s: the boss at %v cannot be walked to" % [map.id, map.boss_cell])
+
+	# You cannot stand on an NPC, so "reachable" means standing next to one.
 	for npc in map.npcs:
-		_expect(reachable.has(npc.cell),
-				"%s: npc %s at %v is unreachable" % [map.id, npc.id, npc.cell])
+		var adjacent := false
+		for direction in directions:
+			if reachable.has(npc.cell + direction):
+				adjacent = true
+				break
+		_expect(adjacent, "%s: npc %s at %v cannot be talked to" % [map.id, npc.id, npc.cell])
+
+
+func _check_npc(db: GameDatabase, map: MapData, npc: NpcPlacement) -> void:
+	_expect(not npc.dialogue.is_empty(), "%s: npc %s has nothing to say" % [map.id, npc.id])
+
+	var has_fallback := false
+	for entry in npc.dialogue:
+		_expect(entry.lines.size() > 0,
+				"%s: npc %s has an empty dialogue entry" % [map.id, npc.id])
+		if entry.required_flag == &"" and entry.forbidden_flag == &"":
+			has_fallback = true
+	# Without an unconditional entry an NPC can end up mute once flags move on.
+	_expect(has_fallback,
+			"%s: npc %s has no unconditional line" % [map.id, npc.id])
+
+	if npc.role == "shop":
+		_expect(db.shop(npc.shop_id) != null,
+				"%s: shop npc %s points at unknown shop %s" % [map.id, npc.id, npc.shop_id])
+	if npc.role == "inn":
+		_expect(npc.inn_price > 0, "%s: inn %s charges nothing" % [map.id, npc.id])
+
+
+func _check_shops(db: GameDatabase) -> void:
+	var seen := {}
+	var allowed := {
+		"weapon": ["weapon"],
+		"armor": ["armor", "shield"],
+		"item": ["consumable"],
+	}
+	for shop in db.shops:
+		_expect(shop.id != &"", "shop with empty id")
+		_expect(not seen.has(shop.id), "duplicate shop id %s" % shop.id)
+		seen[shop.id] = true
+		_expect(not shop.stock.is_empty(), "%s sells nothing" % shop.id)
+		for item_id in shop.stock:
+			var item := db.item(item_id)
+			_expect(item != null, "%s stocks unknown item %s" % [shop.id, item_id])
+			if item == null:
+				continue
+			_expect(item.buy_price > 0,
+					"%s stocks %s which is free" % [shop.id, item_id])
+			_expect(allowed[shop.kind].has(item.kind),
+					"%s (%s shop) stocks a %s" % [shop.id, shop.kind, item.kind])
 
 
 # --- 새 게임 --------------------------------------------------------------

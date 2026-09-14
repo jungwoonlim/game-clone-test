@@ -1,23 +1,24 @@
-[gd_resource type="Resource" script_class="MapData" load_steps=6 format=4]
+[gd_resource type="Resource" script_class="MapData" load_steps=7 format=4]
 
-[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="1_jr8ib"]
-[ext_resource type="Script" path="res://core/data/map_data.gd" id="2_oc6tq"]
-[ext_resource type="Script" path="res://core/data/warp_point.gd" id="3_hrewe"]
+[ext_resource type="Script" path="res://core/data/chest_placement.gd" id="1_oc6tq"]
+[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="2_hrewe"]
+[ext_resource type="Script" path="res://core/data/map_data.gd" id="3_yw2n8"]
+[ext_resource type="Script" path="res://core/data/warp_point.gd" id="4_wcs26"]
 
-[sub_resource type="Resource" id="Resource_yw2n8"]
-script = ExtResource("3_hrewe")
+[sub_resource type="Resource" id="Resource_6yplj"]
+script = ExtResource("4_wcs26")
 from_cell = Vector2i(20, 22)
 to_map = &"town"
 to_cell = Vector2i(16, 22)
 
-[sub_resource type="Resource" id="Resource_wcs26"]
-script = ExtResource("3_hrewe")
+[sub_resource type="Resource" id="Resource_hn6rk"]
+script = ExtResource("4_wcs26")
 from_cell = Vector2i(36, 10)
 to_map = &"dungeon"
 to_cell = Vector2i(5, 5)
 
 [resource]
-script = ExtResource("2_oc6tq")
+script = ExtResource("3_yw2n8")
 id = &"field"
 display_name = "Alefgard"
 width = 48
@@ -28,6 +29,10 @@ encounter_table_id = &"et_field"
 encounter_rate = 18
 is_dungeon = false
 base_sight_radius = 0
-warps = Array[ExtResource("3_hrewe")]([SubResource("Resource_yw2n8"), SubResource("Resource_wcs26")])
-npcs = Array[ExtResource("1_jr8ib")]([])
+warps = Array[ExtResource("4_wcs26")]([SubResource("Resource_6yplj"), SubResource("Resource_hn6rk")])
+npcs = Array[ExtResource("2_hrewe")]([])
+chests = Array[ExtResource("1_oc6tq")]([])
+boss_cell = Vector2i(-1, -1)
+boss_monster = &""
+boss_flag = &""
 default_spawn = Vector2i(20, 23)

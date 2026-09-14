@@ -23,7 +23,7 @@ var _spells_by_id: Dictionary = {}
 
 
 func _initialize() -> void:
-	for dir in ["monsters", "spells", "items", "maps", "encounters"]:
+	for dir in ["monsters", "spells", "items", "maps", "encounters", "shops"]:
 		DirAccess.make_dir_recursive_absolute("res://core/data/%s" % dir)
 
 	var curve := _build_level_curve()
@@ -31,6 +31,7 @@ func _initialize() -> void:
 	var items := _build_items()
 	var monsters := _build_monsters()
 	var tables := _build_encounter_tables()
+	var shops := _build_shops()
 	var maps := _build_maps()
 
 	var db := GameDatabase.new()
@@ -39,6 +40,7 @@ func _initialize() -> void:
 	db.items = items
 	db.monsters = monsters
 	db.encounter_tables = tables
+	db.shops = shops
 	db.maps = maps
 	db.start_map = &"town"
 	db.start_gold = 120
@@ -49,8 +51,9 @@ func _initialize() -> void:
 
 	_build_tileset()
 
-	print("[build] %d monsters, %d spells, %d items, %d maps, %d tables" % [
-		monsters.size(), spells.size(), items.size(), maps.size(), tables.size()])
+	print("[build] %d monsters, %d spells, %d items, %d maps, %d tables, %d shops" % [
+		monsters.size(), spells.size(), items.size(), maps.size(), tables.size(),
+		shops.size()])
 	quit(0)
 
 
@@ -201,7 +204,8 @@ func _build_monsters() -> Array[MonsterData]:
 		["m_magician", "Magician", 13, 30, 11, 12, 20, 12, 18, 0, 0],
 		["m_scorpion", "Scorpion", 20, 20, 18, 16, 35, 16, 24, 64, 32],
 		["m_wraith", "Wraith", 35, 40, 28, 22, 70, 34, 48, 96, 64],
-		["m_dragonlord", "Dragonlord", 70, 60, 38, 36, 0, 0, 0, 255, 255],
+		["m_dragonlord", "Dragonlord", 45, 40, 34, 34, 0, 0, 0, 255, 255],
+		["m_dragonlord_true", "Dragonlord", 65, 60, 44, 40, 0, 0, 0, 255, 255],
 	]
 
 	var actions_by_id := {
@@ -214,8 +218,13 @@ func _build_monsters() -> Array[MonsterData]:
 		],
 		"m_dragonlord": [
 			_action("attack", 3),
-			_action("spell", 2, "hurtmore"),
+			_action("spell", 2, "hurt"),
 			_action("spell", 1, "stopspell", 0.7),
+		],
+		"m_dragonlord_true": [
+			_action("attack", 3),
+			_action("spell", 3, "hurtmore"),
+			_action("spell", 2, "healmore", 0.35),
 		],
 	}
 
@@ -241,10 +250,13 @@ func _build_monsters() -> Array[MonsterData]:
 			actions.append(_action("attack", 1))
 		monster.actions = actions
 
-		if row[0] == "m_dragonlord":
+		if String(row[0]).begins_with("m_dragonlord"):
 			monster.is_boss = true
 			monster.can_flee_from = false
 			monster.can_be_critical = false
+		if row[0] == "m_dragonlord":
+			# The first form does not die; it stands back up as the second.
+			monster.transforms_into = &"m_dragonlord_true"
 
 		_save(monster, "res://core/data/monsters/%s.tres" % row[0])
 		out.append(monster)
@@ -289,6 +301,31 @@ func _build_encounter_tables() -> Array[EncounterTable]:
 	return out
 
 
+# --- 상점 -----------------------------------------------------------------
+
+func _build_shops() -> Array[ShopData]:
+	var specs := [
+		["shop_weapon", "Weapon Shop", "weapon", ["w_club", "w_sword", "w_blade"]],
+		["shop_armor", "Armour Shop", "armor",
+			["a_clothes", "a_leather", "a_plate", "s_small", "s_large"]],
+		["shop_item", "Item Shop", "item", ["herb", "torch"]],
+	]
+
+	var out: Array[ShopData] = []
+	for spec in specs:
+		var shop := ShopData.new()
+		shop.id = StringName(spec[0])
+		shop.display_name = spec[1]
+		shop.kind = spec[2]
+		var stock: Array[StringName] = []
+		for item_id in spec[3]:
+			stock.append(StringName(item_id))
+		shop.stock = stock
+		_save(shop, "res://core/data/shops/%s.tres" % spec[0])
+		out.append(shop)
+	return out
+
+
 # --- 맵 -------------------------------------------------------------------
 
 func _blank(width: int, height: int, fill: int) -> PackedByteArray:
@@ -313,12 +350,37 @@ func _warp(from_cell: Vector2i, to_map: String, to_cell: Vector2i) -> WarpPoint:
 	return warp
 
 
-func _npc(id: String, cell: Vector2i, role: String) -> NpcPlacement:
+func _line(lines: Array, required: String = "", forbidden: String = "",
+		set_flag: String = "") -> DialogueEntry:
+	var entry := DialogueEntry.new()
+	var text := PackedStringArray()
+	for line in lines:
+		text.append(line)
+	entry.lines = text
+	entry.required_flag = StringName(required)
+	entry.forbidden_flag = StringName(forbidden)
+	entry.set_flag = StringName(set_flag)
+	return entry
+
+
+func _chest(cell: Vector2i, item_id: String = "", gold: int = 0) -> ChestPlacement:
+	var chest := ChestPlacement.new()
+	chest.cell = cell
+	chest.item_id = StringName(item_id)
+	chest.gold = gold
+	return chest
+
+
+func _npc(id: String, cell: Vector2i, role: String,
+		dialogue: Array = []) -> NpcPlacement:
 	var npc := NpcPlacement.new()
 	npc.id = StringName(id)
 	npc.cell = cell
 	npc.role = role
-	npc.dialogue_key = id
+	var entries: Array[DialogueEntry] = []
+	for entry in dialogue:
+		entries.append(entry)
+	npc.dialogue = entries
 	return npc
 
 
@@ -327,6 +389,7 @@ func _build_maps() -> Array[MapData]:
 	out.append(_build_town())
 	out.append(_build_field())
 	out.append(_build_dungeon())
+	out.append(_build_dungeon_b2())
 	for map in out:
 		_save(map, "res://core/data/maps/%s.tres" % map.id)
 	return out
@@ -365,13 +428,55 @@ func _build_town() -> MapData:
 	map.warps = warps
 
 	var npcs: Array[NpcPlacement] = []
-	npcs.append(_npc("shop_weapon", Vector2i(6, 9), "shop_weapon"))
-	npcs.append(_npc("shop_armor", Vector2i(21, 9), "shop_armor"))
-	npcs.append(_npc("shop_item", Vector2i(6, 18), "shop_item"))
-	npcs.append(_npc("inn", Vector2i(21, 18), "inn"))
-	npcs.append(_npc("king", Vector2i(16, 2), "king"))
-	npcs.append(_npc("villager_a", Vector2i(13, 11), "villager"))
-	npcs.append(_npc("villager_b", Vector2i(26, 12), "villager"))
+
+	# The King both moves the story forward and is the save point.
+	var king := _npc("king", Vector2i(16, 2), "king", [
+		_line([
+			"Descendant of Erdrick, listen now.",
+			"The Dragonlord has stolen the Light.",
+			"Go forth, and thy deeds shall be recorded.",
+		], "", "heard_quest", "heard_quest"),
+		_line([
+			"Rest, and thy progress shall be recorded.",
+			"Return when the Dragonlord has fallen.",
+		]),
+	])
+	npcs.append(king)
+
+	var weapon_shop := _npc("shop_weapon", Vector2i(6, 9), "shop",
+			[_line(["We deal in arms. What will thou have?"])])
+	weapon_shop.shop_id = &"shop_weapon"
+	npcs.append(weapon_shop)
+
+	var armor_shop := _npc("shop_armor", Vector2i(21, 9), "shop",
+			[_line(["Armour keeps a traveller breathing."])])
+	armor_shop.shop_id = &"shop_armor"
+	npcs.append(armor_shop)
+
+	var item_shop := _npc("shop_item", Vector2i(6, 18), "shop",
+			[_line(["Herbs and torches. Thou wilt want both."])])
+	item_shop.shop_id = &"shop_item"
+	npcs.append(item_shop)
+
+	var inn := _npc("inn", Vector2i(21, 18), "inn",
+			[_line(["Welcome. A night's rest restores all."])])
+	inn.inn_price = 6
+	npcs.append(inn)
+
+	# A villager whose line changes once the King has spoken — the smallest
+	# possible proof that the flag system works in both directions.
+	npcs.append(_npc("villager_a", Vector2i(13, 11), "villager", [
+		_line(["Thy path is set. The cave lies east, past the swamp."],
+				"heard_quest"),
+		_line(["The King has been waiting for thee. Speak with him."]),
+	]))
+	npcs.append(_npc("villager_b", Vector2i(26, 12), "villager", [
+		_line([
+			"None who enter the cave unarmed return.",
+			"Buy a weapon before thou goest.",
+		]),
+	]))
+
 	map.npcs = npcs
 	return map
 
@@ -428,8 +533,10 @@ func _build_dungeon() -> MapData:
 	_rect(tiles, w, 5, 8, 5, 14, Terrain.Type.FLOOR)
 	_rect(tiles, w, 11, 17, 20, 17, Terrain.Type.FLOOR)
 	_rect(tiles, w, 24, 9, 24, 13, Terrain.Type.FLOOR)
-	# Way out.
+	# Way out, way down, and something worth the trip.
 	tiles[4 * w + 4] = Terrain.Type.STAIRS_UP
+	tiles[18 * w + 26] = Terrain.Type.STAIRS_DOWN
+	tiles[18 * w + 6] = Terrain.Type.CHEST
 
 	var map := MapData.new()
 	map.id = &"dungeon"
@@ -446,7 +553,55 @@ func _build_dungeon() -> MapData:
 
 	var warps: Array[WarpPoint] = []
 	warps.append(_warp(Vector2i(4, 4), "field", Vector2i(36, 11)))
+	warps.append(_warp(Vector2i(26, 18), "dungeon_b2", Vector2i(5, 5)))
 	map.warps = warps
+
+	var chests: Array[ChestPlacement] = []
+	chests.append(_chest(Vector2i(6, 18), "", 120))
+	map.chests = chests
+	return map
+
+
+func _build_dungeon_b2() -> MapData:
+	var w := 32
+	var h := 24
+	var tiles := _blank(w, h, Terrain.Type.WALL)
+	# Entry room, treasure room, throne room, joined in a line.
+	_rect(tiles, w, 2, 2, 9, 9, Terrain.Type.FLOOR)
+	_rect(tiles, w, 18, 2, 28, 9, Terrain.Type.FLOOR)
+	_rect(tiles, w, 18, 12, 29, 21, Terrain.Type.FLOOR)
+	_rect(tiles, w, 9, 5, 18, 5, Terrain.Type.FLOOR)
+	_rect(tiles, w, 24, 9, 24, 12, Terrain.Type.FLOOR)
+
+	tiles[4 * w + 4] = Terrain.Type.STAIRS_UP
+	tiles[5 * w + 21] = Terrain.Type.CHEST
+	tiles[5 * w + 25] = Terrain.Type.CHEST
+
+	var map := MapData.new()
+	map.id = &"dungeon_b2"
+	map.display_name = "Erdrick's Cave B2"
+	map.width = w
+	map.height = h
+	map.tiles = tiles
+	map.elevation = _blank(w, h, 0)
+	map.encounter_table_id = &"et_dungeon"
+	map.encounter_rate = 30
+	map.is_dungeon = true
+	map.base_sight_radius = 3
+	map.default_spawn = Vector2i(5, 5)
+
+	var warps: Array[WarpPoint] = []
+	warps.append(_warp(Vector2i(4, 4), "dungeon", Vector2i(26, 17)))
+	map.warps = warps
+
+	var chests: Array[ChestPlacement] = []
+	chests.append(_chest(Vector2i(21, 5), "s_small", 0))
+	chests.append(_chest(Vector2i(25, 5), "", 450))
+	map.chests = chests
+
+	map.boss_cell = Vector2i(23, 16)
+	map.boss_monster = &"m_dragonlord"
+	map.boss_flag = &"dragonlord_defeated"
 	return map
 
 

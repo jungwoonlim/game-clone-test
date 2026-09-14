@@ -23,25 +23,37 @@ dq1-clone/
 │   ├── rng.gd                 ★ 시드 주입형 난수. 전역 randi() 금지
 │   ├── game_session.gd        ★ core의 유일한 진입점 (뷰와 툴이 공유)
 │   ├── data/                  Resource 정의 + .tres 데이터
-│   │   ├── game_database.gd   전체 데이터 인덱스 (database.tres 하나로 로드)
-│   │   ├── monsters/ spells/ items/ maps/ encounters/
-│   │   └── level_curve.tres
+│   │   ├── game_database.gd   전체 인덱스 (database.tres 하나로 로드)
+│   │   ├── monster_data / monster_action / spell_data / item_data
+│   │   ├── map_data / warp_point / npc_placement / chest_placement
+│   │   ├── dialogue_entry / shop_data / encounter_table / level_curve
+│   │   └── monsters/ spells/ items/ maps/ encounters/ shops/   (.tres)
 │   ├── battle/
-│   │   ├── battle_state.gd    전투 상태머신 (순수 로직)
+│   │   ├── battle_state.gd    전투 상태머신 + 보스 2페이즈 변신
 │   │   ├── battle_event.gd    턴 결과 이벤트
 │   │   ├── formulas.gd        ★ 모든 전투 공식이 여기에만 존재
 │   │   └── actor.gd           전투 참가자 (용사/몬스터 공통)
 │   ├── party/
-│   │   ├── hero.gd            스탯, 장비, 인벤토리
+│   │   ├── hero.gd            스탯, 장비 슬롯, 소지품
 │   │   └── progression.gd     EXP → 레벨 → 주문 습득, 사망 처리
-│   └── world/
-│       ├── world_state.gd     현재 맵, 논리 좌표, 걸음 수, 이동 판정
-│       ├── terrain.gd         지형 규칙 (통행/조우율/데미지)
-│       └── encounter.gd       인카운터 추첨, Repel
+│   ├── world/
+│   │   ├── world_state.gd     좌표·이동·워프·보스 트리거·조명 감소
+│   │   ├── terrain.gd         지형 규칙 (통행/조우율/데미지)
+│   │   └── encounter.gd       인카운터 추첨, Repel
+│   ├── town/services.gd       구입·판매·장비·여관·도구 사용
+│   └── save/save_game.gd      ConfigFile 직렬화 (core 상태만)
 │
 ├── view_2d/                   ← 나중에 view_3d/ 로 교체되는 층
-│   ├── field/                 TileMapLayer, 용사 스프라이트, 카메라, 타일 아틀라스
-│   └── ui/                    메시지 창, 몬스터 초상, 전투 문구
+│   ├── field/
+│   │   ├── field_view.gd      TileMapLayer, 카메라, 시야
+│   │   ├── hero_sprite.gd / npc_layer.gd / darkness.gd
+│   │   └── terrain_tiles.png + terrain_tileset.tres
+│   └── ui/
+│       ├── dq_window.gd       공통 창 프레임
+│       ├── message_window.gd  타자기 출력
+│       ├── command_window.gd  await 기반 메뉴 (전투/필드/상점 공용)
+│       ├── status_window.gd / detail_window.gd / monster_sprite.gd
+│       └── battle_text.gd     이벤트 → 문장 (모든 문구가 여기 모임)
 │
 ├── scenes/
 │   └── main.tscn / main.gd    core와 view를 조립하는 유일한 지점
@@ -49,10 +61,10 @@ dq1-clone/
 └── tools/                     전부 헤드리스
     ├── build_tiles.gd         플레이스홀더 타일 아틀라스 생성
     ├── build_data.gd          .tres 데이터 + TileSet 시딩
-    ├── validate_data.gd       데이터 정합성 검사
-    ├── test_core.gd           core 동작 테스트 (결정성 포함)
+    ├── validate_data.gd       데이터 정합성 (649 checks)
+    ├── test_core.gd           core 동작 테스트 (223 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
-    └── smoke_view.gd          core↔view 배선 검사
+    └── smoke_view.gd          core↔view 배선 + 전체 플레이스루 (16 checks)
 ```
 
 ## 신호 흐름

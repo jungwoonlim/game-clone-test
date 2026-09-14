@@ -14,6 +14,7 @@ const PATH := "res://core/data/database.tres"
 @export var items: Array[ItemData] = []
 @export var maps: Array[MapData] = []
 @export var encounter_tables: Array[EncounterTable] = []
+@export var shops: Array[ShopData] = []
 @export var level_curve: LevelCurve = null
 
 @export_group("New game")
@@ -28,6 +29,7 @@ var _spell_index: Dictionary = {}
 var _item_index: Dictionary = {}
 var _map_index: Dictionary = {}
 var _encounter_index: Dictionary = {}
+var _shop_index: Dictionary = {}
 var _indexed := false
 
 
@@ -44,6 +46,7 @@ func build_index() -> void:
 	_item_index.clear()
 	_map_index.clear()
 	_encounter_index.clear()
+	_shop_index.clear()
 	for m in monsters:
 		_monster_index[m.id] = m
 	for s in spells:
@@ -54,6 +57,8 @@ func build_index() -> void:
 		_map_index[m.id] = m
 	for t in encounter_tables:
 		_encounter_index[t.id] = t
+	for s in shops:
+		_shop_index[s.id] = s
 	_indexed = true
 
 
@@ -85,6 +90,11 @@ func map(id: StringName) -> MapData:
 func encounter_table(id: StringName) -> EncounterTable:
 	_ensure_index()
 	return _encounter_index.get(id)
+
+
+func shop(id: StringName) -> ShopData:
+	_ensure_index()
+	return _shop_index.get(id)
 
 
 ## Spells the hero knows at `level`, in learning order.

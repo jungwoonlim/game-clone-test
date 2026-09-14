@@ -1,27 +1,44 @@
-[gd_resource type="Resource" script_class="MapData" load_steps=5 format=4]
+[gd_resource type="Resource" script_class="MapData" load_steps=8 format=4]
 
-[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="1_2bt0w"]
-[ext_resource type="Script" path="res://core/data/map_data.gd" id="2_uxnpn"]
-[ext_resource type="Script" path="res://core/data/warp_point.gd" id="3_s8fuq"]
+[ext_resource type="Script" path="res://core/data/chest_placement.gd" id="1_uxnpn"]
+[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="2_s8fuq"]
+[ext_resource type="Script" path="res://core/data/map_data.gd" id="3_tldbk"]
+[ext_resource type="Script" path="res://core/data/warp_point.gd" id="4_nuw1g"]
 
-[sub_resource type="Resource" id="Resource_tldbk"]
-script = ExtResource("3_s8fuq")
+[sub_resource type="Resource" id="Resource_1ncj8"]
+script = ExtResource("1_uxnpn")
+cell = Vector2i(6, 18)
+item_id = &""
+gold = 120
+
+[sub_resource type="Resource" id="Resource_d6ff1"]
+script = ExtResource("4_nuw1g")
 from_cell = Vector2i(4, 4)
 to_map = &"field"
 to_cell = Vector2i(36, 11)
 
+[sub_resource type="Resource" id="Resource_vliqf"]
+script = ExtResource("4_nuw1g")
+from_cell = Vector2i(26, 18)
+to_map = &"dungeon_b2"
+to_cell = Vector2i(5, 5)
+
 [resource]
-script = ExtResource("2_uxnpn")
+script = ExtResource("3_tldbk")
 id = &"dungeon"
 display_name = "Erdrick's Cave"
 width = 32
 height = 24
-tiles = PackedByteArray("BgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBwcHBwcHBwYGBgYGBgYGBgYGBwcHBwcHBwcHBwYGBgYHBwcHBwcHBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgcHDAcHBwcGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwYGBgYHBwcHBwcHBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgcHBwcHBwcGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBwcHBwcHBwYGBgYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBgYHBgYGBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYGBgcGBgYGBgYGBgYGBgYGBgYGBgYHBgYGBgYGBgYGBgYGBwYGBgYGBgYGBgYGBgYGBgYGBgcGBgYGBgYGBgYGBgYHBgYGBgYGBgYGBgYGBgYGBgYGBwYGBgYGBgYGBgYGBgcGBgYGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBwcHBwcHBwcHBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYHBwcHBwcHBwcGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwYGBgYGBwcHBwcHBwcHBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYHBwcHBwcHBwcGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBwcHBwcHBwcHBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYG")
+tiles = PackedByteArray("BgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBwcHBwcHBwYGBgYGBgYGBgYGBwcHBwcHBwcHBwYGBgYHBwcHBwcHBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgcHDAcHBwcGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwYGBgYHBwcHBwcHBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgcHBwcHBwcGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBwcHBwcHBwYGBgYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBgYHBgYGBgYGBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYGBgcGBgYGBgYGBgYGBgYGBgYGBgYHBgYGBgYGBgYGBgYGBwYGBgYGBgYGBgYGBgYGBgYGBgcGBgYGBgYGBgYGBgYHBgYGBgYGBgYGBgYGBgYGBgYGBwYGBgYGBgYGBgYGBgcGBgYGBgYGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBwcHBwcHBwcHBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYHBwcHBwcHBwcGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwYGBgYGBwcHDgcHBwcHBgYGBgYGBgYHBwcHBwcLBwcHBgYGBgYHBwcHBwcHBwcGBgYGBgYGBgcHBwcHBwcHBwcGBgYGBgcHBwcHBwcHBwYGBgYGBgYGBwcHBwcHBwcHBwYGBgYGBwcHBwcHBwcHBgYGBgYGBgYHBwcHBwcHBwcHBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYG")
 elevation = PackedByteArray("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 encounter_table_id = &"et_dungeon"
 encounter_rate = 26
 is_dungeon = true
 base_sight_radius = 3
-warps = Array[ExtResource("3_s8fuq")]([SubResource("Resource_tldbk")])
-npcs = Array[ExtResource("1_2bt0w")]([])
+warps = Array[ExtResource("4_nuw1g")]([SubResource("Resource_d6ff1"), SubResource("Resource_vliqf")])
+npcs = Array[ExtResource("2_s8fuq")]([])
+chests = Array[ExtResource("1_uxnpn")]([SubResource("Resource_1ncj8")])
+boss_cell = Vector2i(-1, -1)
+boss_monster = &""
+boss_flag = &""
 default_spawn = Vector2i(5, 5)

@@ -237,9 +237,25 @@ func _do_flee(events: Array[BattleEvent]) -> void:
 	events.append(BattleEvent.new(BattleEvent.Kind.FLEE_FAIL, true))
 
 
+## A boss with a second form does not die the first time it runs out of HP.
+## Status effects do not carry over — the thing standing there is new.
+func _try_transform(events: Array[BattleEvent]) -> bool:
+	if monster.monster == null or monster.monster.transforms_into == &"":
+		return false
+	var next := _db.monster(monster.monster.transforms_into)
+	if next == null:
+		return false
+	monster = BattleActor.from_monster(next)
+	events.append(BattleEvent.new(
+			BattleEvent.Kind.MONSTER_TRANSFORMED, false, 0, next.display_name))
+	return true
+
+
 # --- 종료 판정 -----------------------------------------------------------
 
 func _check_end(events: Array[BattleEvent]) -> bool:
+	if not monster.is_alive() and _try_transform(events):
+		return false
 	if not monster.is_alive():
 		events.append(BattleEvent.new(BattleEvent.Kind.MONSTER_DEFEATED, true, 0, monster.display_name))
 		result = Result.HERO_WON

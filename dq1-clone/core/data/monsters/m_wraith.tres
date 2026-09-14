@@ -42,3 +42,4 @@ resist_hurt = 0.0
 can_flee_from = true
 can_be_critical = true
 is_boss = false
+transforms_into = &""

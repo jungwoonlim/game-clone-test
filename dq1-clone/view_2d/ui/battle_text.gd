@@ -57,6 +57,8 @@ static func describe(event: BattleEvent, hero_name: String, monster_name: String
 			return "There is no escape!"
 		BattleEvent.Kind.FLEE_FAIL:
 			return "%s cannot escape!" % actor
+		BattleEvent.Kind.MONSTER_TRANSFORMED:
+			return "%s rises in its true form!" % event.label
 		BattleEvent.Kind.MONSTER_DEFEATED:
 			return "%s is defeated!" % event.label
 		BattleEvent.Kind.HERO_DEFEATED:

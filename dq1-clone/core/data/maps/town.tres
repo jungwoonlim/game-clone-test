@@ -1,66 +1,145 @@
-[gd_resource type="Resource" script_class="MapData" load_steps=12 format=4]
+[gd_resource type="Resource" script_class="MapData" load_steps=23 format=4]
 
-[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="1_fxwqh"]
-[ext_resource type="Script" path="res://core/data/map_data.gd" id="2_u28d2"]
-[ext_resource type="Script" path="res://core/data/warp_point.gd" id="3_d1uh2"]
-
-[sub_resource type="Resource" id="Resource_rhd0b"]
-script = ExtResource("1_fxwqh")
-id = &"shop_weapon"
-cell = Vector2i(6, 9)
-role = "shop_weapon"
-dialogue_key = "shop_weapon"
-
-[sub_resource type="Resource" id="Resource_w152k"]
-script = ExtResource("1_fxwqh")
-id = &"shop_armor"
-cell = Vector2i(21, 9)
-role = "shop_armor"
-dialogue_key = "shop_armor"
-
-[sub_resource type="Resource" id="Resource_t6b2x"]
-script = ExtResource("1_fxwqh")
-id = &"shop_item"
-cell = Vector2i(6, 18)
-role = "shop_item"
-dialogue_key = "shop_item"
-
-[sub_resource type="Resource" id="Resource_fsvxh"]
-script = ExtResource("1_fxwqh")
-id = &"inn"
-cell = Vector2i(21, 18)
-role = "inn"
-dialogue_key = "inn"
+[ext_resource type="Script" path="res://core/data/chest_placement.gd" id="1_d1uh2"]
+[ext_resource type="Script" path="res://core/data/npc_placement.gd" id="2_rhd0b"]
+[ext_resource type="Script" path="res://core/data/dialogue_entry.gd" id="3_w152k"]
+[ext_resource type="Script" path="res://core/data/map_data.gd" id="4_t6b2x"]
+[ext_resource type="Script" path="res://core/data/warp_point.gd" id="5_fsvxh"]
 
 [sub_resource type="Resource" id="Resource_gdfa2"]
-script = ExtResource("1_fxwqh")
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &"heard_quest"
+lines = PackedStringArray("Descendant of Erdrick, listen now.", "The Dragonlord has stolen the Light.", "Go forth, and thy deeds shall be recorded.")
+set_flag = &"heard_quest"
+
+[sub_resource type="Resource" id="Resource_sovvx"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("Rest, and thy progress shall be recorded.", "Return when the Dragonlord has fallen.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_pibri"]
+script = ExtResource("2_rhd0b")
 id = &"king"
 cell = Vector2i(16, 2)
 role = "king"
-dialogue_key = "king"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_gdfa2"), SubResource("Resource_sovvx")])
+shop_id = &""
+inn_price = 0
 
-[sub_resource type="Resource" id="Resource_sovvx"]
-script = ExtResource("1_fxwqh")
+[sub_resource type="Resource" id="Resource_6wgp1"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("We deal in arms. What will thou have?")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_wtag4"]
+script = ExtResource("2_rhd0b")
+id = &"shop_weapon"
+cell = Vector2i(6, 9)
+role = "shop"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_6wgp1")])
+shop_id = &"shop_weapon"
+inn_price = 0
+
+[sub_resource type="Resource" id="Resource_q8gio"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("Armour keeps a traveller breathing.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_x01jn"]
+script = ExtResource("2_rhd0b")
+id = &"shop_armor"
+cell = Vector2i(21, 9)
+role = "shop"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_q8gio")])
+shop_id = &"shop_armor"
+inn_price = 0
+
+[sub_resource type="Resource" id="Resource_lu41e"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("Herbs and torches. Thou wilt want both.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_pa7qc"]
+script = ExtResource("2_rhd0b")
+id = &"shop_item"
+cell = Vector2i(6, 18)
+role = "shop"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_lu41e")])
+shop_id = &"shop_item"
+inn_price = 0
+
+[sub_resource type="Resource" id="Resource_356bq"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("Welcome. A night\'s rest restores all.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_fhw0c"]
+script = ExtResource("2_rhd0b")
+id = &"inn"
+cell = Vector2i(21, 18)
+role = "inn"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_356bq")])
+shop_id = &""
+inn_price = 6
+
+[sub_resource type="Resource" id="Resource_5y866"]
+script = ExtResource("3_w152k")
+required_flag = &"heard_quest"
+forbidden_flag = &""
+lines = PackedStringArray("Thy path is set. The cave lies east, past the swamp.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_t3d5l"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("The King has been waiting for thee. Speak with him.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_1tygy"]
+script = ExtResource("2_rhd0b")
 id = &"villager_a"
 cell = Vector2i(13, 11)
 role = "villager"
-dialogue_key = "villager_a"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_5y866"), SubResource("Resource_t3d5l")])
+shop_id = &""
+inn_price = 0
 
-[sub_resource type="Resource" id="Resource_pibri"]
-script = ExtResource("1_fxwqh")
+[sub_resource type="Resource" id="Resource_husoe"]
+script = ExtResource("3_w152k")
+required_flag = &""
+forbidden_flag = &""
+lines = PackedStringArray("None who enter the cave unarmed return.", "Buy a weapon before thou goest.")
+set_flag = &""
+
+[sub_resource type="Resource" id="Resource_hupaf"]
+script = ExtResource("2_rhd0b")
 id = &"villager_b"
 cell = Vector2i(26, 12)
 role = "villager"
-dialogue_key = "villager_b"
+dialogue = Array[ExtResource("3_w152k")]([SubResource("Resource_husoe")])
+shop_id = &""
+inn_price = 0
 
-[sub_resource type="Resource" id="Resource_6wgp1"]
-script = ExtResource("3_d1uh2")
+[sub_resource type="Resource" id="Resource_3bb2s"]
+script = ExtResource("5_fsvxh")
 from_cell = Vector2i(16, 23)
 to_map = &"field"
 to_cell = Vector2i(20, 23)
 
 [resource]
-script = ExtResource("2_u28d2")
+script = ExtResource("4_t6b2x")
 id = &"town"
 display_name = "Tantegel Town"
 width = 32
@@ -71,6 +150,10 @@ encounter_table_id = &""
 encounter_rate = 0
 is_dungeon = false
 base_sight_radius = 0
-warps = Array[ExtResource("3_d1uh2")]([SubResource("Resource_6wgp1")])
-npcs = Array[ExtResource("1_fxwqh")]([SubResource("Resource_rhd0b"), SubResource("Resource_w152k"), SubResource("Resource_t6b2x"), SubResource("Resource_fsvxh"), SubResource("Resource_gdfa2"), SubResource("Resource_sovvx"), SubResource("Resource_pibri")])
+warps = Array[ExtResource("5_fsvxh")]([SubResource("Resource_3bb2s")])
+npcs = Array[ExtResource("2_rhd0b")]([SubResource("Resource_pibri"), SubResource("Resource_wtag4"), SubResource("Resource_x01jn"), SubResource("Resource_pa7qc"), SubResource("Resource_fhw0c"), SubResource("Resource_1tygy"), SubResource("Resource_hupaf")])
+chests = Array[ExtResource("1_d1uh2")]([])
+boss_cell = Vector2i(-1, -1)
+boss_monster = &""
+boss_flag = &""
 default_spawn = Vector2i(16, 20)

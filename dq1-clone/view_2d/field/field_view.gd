@@ -10,8 +10,11 @@ const WALK_SPEED := 90.0
 @onready var _terrain: TileMapLayer = $Terrain
 @onready var _hero: Node2D = $Hero
 @onready var _camera: Camera2D = $Hero/Camera2D
+@onready var _darkness: Node2D = $Darkness
+@onready var _npcs: Node2D = $Npcs
 
 var _target_position: Vector2 = Vector2.ZERO
+var _map_size: Vector2i = Vector2i.ZERO
 
 
 func render_map(map: MapData) -> void:
@@ -26,6 +29,8 @@ func render_map(map: MapData) -> void:
 	_camera.limit_top = 0
 	_camera.limit_right = map.width * TILE
 	_camera.limit_bottom = map.height * TILE
+	_map_size = Vector2i(map.width, map.height)
+	_npcs.set_npcs(map.npcs)
 
 
 func snap_hero(cell: Vector2i) -> void:
@@ -53,6 +58,16 @@ func _process(delta: float) -> void:
 		_hero.position = _hero.position.move_toward(_target_position, WALK_SPEED * delta)
 	else:
 		_hero.position = _target_position
+
+
+## Repaints the dungeon darkness. radius 0 lights the whole map.
+func set_sight(center: Vector2i, radius: int) -> void:
+	_darkness.configure(center, radius, _map_size.x, _map_size.y)
+
+
+## Used when a chest is emptied, so the lid does not stay shut.
+func set_cell_terrain(cell: Vector2i, terrain: int) -> void:
+	_terrain.set_cell(cell, 0, Vector2i(terrain, 0))
 
 
 func _cell_to_position(cell: Vector2i) -> Vector2:

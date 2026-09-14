@@ -26,6 +26,7 @@ const TILES := [
 	[Color("6a6a75"), Color("50505a"), "steps"],     # STAIRS_DOWN
 	[Color("9a9aa5"), Color("70707a"), "steps"],     # STAIRS_UP
 	[Color("8a5a2a"), Color("5e3c18"), "door"],      # DOOR
+	[Color("7a6a55"), Color("a8761f"), "chest"],     # CHEST
 ]
 
 
@@ -98,6 +99,16 @@ func _draw_tile(image: Image, ox: int, base: Color, accent: Color, pattern: Stri
 			for i in 4:
 				for x in range(2 + i, 14):
 					_px(image, ox, Vector2i(x, 3 + i * 3), accent)
+		"chest":
+			for y in range(5, 14):
+				for x in range(3, 13):
+					_px(image, ox, Vector2i(x, y), accent)
+			for x in range(3, 13):
+				_px(image, ox, Vector2i(x, 5), Color("5e3c18"))
+				_px(image, ox, Vector2i(x, 9), Color("5e3c18"))
+				_px(image, ox, Vector2i(x, 13), Color("5e3c18"))
+			_px(image, ox, Vector2i(7, 10), Color("f0e08a"))
+			_px(image, ox, Vector2i(8, 10), Color("f0e08a"))
 		"door":
 			for y in range(3, 15):
 				for x in range(4, 12):

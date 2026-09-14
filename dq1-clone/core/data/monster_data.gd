@@ -34,3 +34,5 @@ extends Resource
 @export var can_be_critical: bool = true
 ## Bosses and set-piece fights.
 @export var is_boss: bool = false
+## When HP hits zero, become this monster at full health instead of dying.
+@export var transforms_into: StringName = &""
