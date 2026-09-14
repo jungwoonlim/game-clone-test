@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://view_2d/ui/status_window.gd" id="5_status"]
 [ext_resource type="Script" path="res://view_2d/ui/message_window.gd" id="6_message"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://view_2d/ui/dq_window.gd" id="9_window"]
 [ext_resource type="Script" path="res://view_2d/ui/detail_window.gd" id="10_detail"]
 [ext_resource type="Script" path="res://view_2d/ui/battle_backdrop.gd" id="13_backdrop"]
+[ext_resource type="Script" path="res://view_2d/ui/settings_window.gd" id="14_settings"]
 
 [node name="UI" type="CanvasLayer"]
 
@@ -39,7 +40,7 @@ offset_left = 96.0
 offset_top = 38.0
 offset_right = 416.0
 offset_bottom = 54.0
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.95, 0.95, 0.91, 1)
 text = "Monster"
 horizontal_alignment = 1
@@ -73,7 +74,7 @@ offset_left = 96.0
 offset_top = 180.0
 offset_right = 416.0
 offset_bottom = 198.0
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.95, 0.95, 0.91, 1)
 text = "HP"
 horizontal_alignment = 1
@@ -81,8 +82,8 @@ horizontal_alignment = 1
 [node name="Status" type="Control" parent="."]
 offset_left = 6.0
 offset_top = 6.0
-offset_right = 96.0
-offset_bottom = 72.0
+offset_right = 108.0
+offset_bottom = 82.0
 mouse_filter = 2
 script = ExtResource("5_status")
 
@@ -91,7 +92,7 @@ offset_left = 350.0
 offset_top = 8.0
 offset_right = 506.0
 offset_bottom = 26.0
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.95, 0.95, 0.91, 1)
 theme_override_colors/font_outline_color = Color(0.04, 0.04, 0.07, 1)
 theme_override_constants/outline_size = 3
@@ -99,7 +100,7 @@ horizontal_alignment = 2
 
 [node name="Message" type="Control" parent="."]
 offset_left = 6.0
-offset_top = 310.0
+offset_top = 300.0
 offset_right = 506.0
 offset_bottom = 376.0
 mouse_filter = 2
@@ -107,15 +108,15 @@ script = ExtResource("6_message")
 
 [node name="Command" type="Control" parent="."]
 offset_left = 6.0
-offset_top = 208.0
+offset_top = 172.0
 offset_right = 96.0
-offset_bottom = 300.0
+offset_bottom = 292.0
 mouse_filter = 2
 script = ExtResource("7_command")
 
 [node name="SubCommand" type="Control" parent="."]
-offset_left = 14.0
-offset_top = 132.0
+offset_left = 116.0
+offset_top = 120.0
 offset_right = 134.0
 offset_bottom = 236.0
 mouse_filter = 2
@@ -128,6 +129,14 @@ offset_right = 340.0
 offset_bottom = 200.0
 mouse_filter = 2
 script = ExtResource("10_detail")
+
+[node name="Settings" type="Control" parent="."]
+offset_left = 158.0
+offset_top = 120.0
+offset_right = 354.0
+offset_bottom = 240.0
+mouse_filter = 2
+script = ExtResource("14_settings")
 
 [node name="Flash" type="ColorRect" parent="."]
 anchor_right = 1.0

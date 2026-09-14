@@ -139,6 +139,7 @@ func restore_fully() -> void:
 
 func to_battle_actor(db: GameDatabase) -> BattleActor:
 	var actor := BattleActor.new()
+	actor.id = &"hero"
 	actor.display_name = display_name
 	actor.is_hero = true
 	actor.max_hp = max_hp

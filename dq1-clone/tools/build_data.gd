@@ -350,6 +350,9 @@ func _warp(from_cell: Vector2i, to_map: String, to_cell: Vector2i) -> WarpPoint:
 	return warp
 
 
+## `lines` are translation keys, not sentences: the wording lives in
+## assets/i18n/strings.csv and the .tres stays language-neutral, like every
+## other id in core/data.
 func _line(lines: Array, required: String = "", forbidden: String = "",
 		set_flag: String = "") -> DialogueEntry:
 	var entry := DialogueEntry.new()
@@ -431,50 +434,40 @@ func _build_town() -> MapData:
 
 	# The King both moves the story forward and is the save point.
 	var king := _npc("king", Vector2i(16, 2), "king", [
-		_line([
-			"Descendant of Erdrick, listen now.",
-			"The Dragonlord has stolen the Light.",
-			"Go forth, and thy deeds shall be recorded.",
-		], "", "heard_quest", "heard_quest"),
-		_line([
-			"Rest, and thy progress shall be recorded.",
-			"Return when the Dragonlord has fallen.",
-		]),
+		_line(["NPC_KING_1A", "NPC_KING_1B", "NPC_KING_1C"],
+				"", "heard_quest", "heard_quest"),
+		_line(["NPC_KING_2A", "NPC_KING_2B"]),
 	])
 	npcs.append(king)
 
 	var weapon_shop := _npc("shop_weapon", Vector2i(6, 9), "shop",
-			[_line(["We deal in arms. What will thou have?"])])
+			[_line(["NPC_SHOP_WEAPON"])])
 	weapon_shop.shop_id = &"shop_weapon"
 	npcs.append(weapon_shop)
 
 	var armor_shop := _npc("shop_armor", Vector2i(21, 9), "shop",
-			[_line(["Armour keeps a traveller breathing."])])
+			[_line(["NPC_SHOP_ARMOR"])])
 	armor_shop.shop_id = &"shop_armor"
 	npcs.append(armor_shop)
 
 	var item_shop := _npc("shop_item", Vector2i(6, 18), "shop",
-			[_line(["Herbs and torches. Thou wilt want both."])])
+			[_line(["NPC_SHOP_ITEM"])])
 	item_shop.shop_id = &"shop_item"
 	npcs.append(item_shop)
 
 	var inn := _npc("inn", Vector2i(21, 18), "inn",
-			[_line(["Welcome. A night's rest restores all."])])
+			[_line(["NPC_INN"])])
 	inn.inn_price = 6
 	npcs.append(inn)
 
 	# A villager whose line changes once the King has spoken — the smallest
 	# possible proof that the flag system works in both directions.
 	npcs.append(_npc("villager_a", Vector2i(13, 11), "villager", [
-		_line(["Thy path is set. The cave lies east, past the swamp."],
-				"heard_quest"),
-		_line(["The King has been waiting for thee. Speak with him."]),
+		_line(["NPC_VILLAGER_A1"], "heard_quest"),
+		_line(["NPC_VILLAGER_A2"]),
 	]))
 	npcs.append(_npc("villager_b", Vector2i(26, 12), "villager", [
-		_line([
-			"None who enter the cave unarmed return.",
-			"Buy a weapon before thou goest.",
-		]),
+		_line(["NPC_VILLAGER_B1", "NPC_VILLAGER_B2"]),
 	]))
 
 	map.npcs = npcs

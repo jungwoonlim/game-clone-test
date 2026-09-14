@@ -37,7 +37,7 @@ func is_over() -> bool:
 ## free action here if it wins initiative.
 func start() -> Array[BattleEvent]:
 	var events: Array[BattleEvent] = []
-	events.append(BattleEvent.new(BattleEvent.Kind.BATTLE_START, false, 0, monster.display_name))
+	events.append(BattleEvent.new(BattleEvent.Kind.BATTLE_START, false, 0, monster.id))
 	if Formulas.monster_acts_first(hero.agility, monster.agility, _rng):
 		events.append(BattleEvent.new(BattleEvent.Kind.MONSTER_FIRST, false))
 		_take_monster_turn(events)
@@ -173,17 +173,17 @@ func _do_spell(caster: BattleActor, target: BattleActor, spell_id: StringName,
 		events.append(BattleEvent.new(BattleEvent.Kind.SPELL_UNAVAILABLE, caster.is_hero))
 		return
 	if caster.is_hero and not caster.knows_spell(spell_id):
-		events.append(BattleEvent.new(BattleEvent.Kind.SPELL_UNAVAILABLE, true, 0, spell.display_name))
+		events.append(BattleEvent.new(BattleEvent.Kind.SPELL_UNAVAILABLE, true, 0, spell.id))
 		return
 	if caster.spell_sealed:
-		events.append(BattleEvent.new(BattleEvent.Kind.SPELL_SEALED, caster.is_hero, 0, spell.display_name))
+		events.append(BattleEvent.new(BattleEvent.Kind.SPELL_SEALED, caster.is_hero, 0, spell.id))
 		return
 	if caster.mp < spell.mp_cost:
-		events.append(BattleEvent.new(BattleEvent.Kind.NOT_ENOUGH_MP, caster.is_hero, 0, spell.display_name))
+		events.append(BattleEvent.new(BattleEvent.Kind.NOT_ENOUGH_MP, caster.is_hero, 0, spell.id))
 		return
 
 	caster.mp -= spell.mp_cost
-	events.append(BattleEvent.new(BattleEvent.Kind.SPELL_CAST, caster.is_hero, 0, spell.display_name))
+	events.append(BattleEvent.new(BattleEvent.Kind.SPELL_CAST, caster.is_hero, 0, spell.id))
 
 	match spell.kind:
 		"damage":
@@ -230,11 +230,11 @@ func _do_item(item_id: StringName, events: Array[BattleEvent]) -> void:
 		return
 	if hero.hp >= hero.max_hp:
 		events.append(BattleEvent.new(BattleEvent.Kind.ITEM_NO_EFFECT, true, 0,
-				item.display_name))
+				item.id))
 		return
 	var healed := hero.restore_hp(item.effect_power)
 	hero.consume_item(item_id)
-	events.append(BattleEvent.new(BattleEvent.Kind.ITEM_USED, true, healed, item.display_name))
+	events.append(BattleEvent.new(BattleEvent.Kind.ITEM_USED, true, healed, item.id))
 
 
 func _do_flee(events: Array[BattleEvent]) -> void:
@@ -258,7 +258,7 @@ func _try_transform(events: Array[BattleEvent]) -> bool:
 		return false
 	monster = BattleActor.from_monster(next)
 	events.append(BattleEvent.new(
-			BattleEvent.Kind.MONSTER_TRANSFORMED, false, 0, next.display_name))
+			BattleEvent.Kind.MONSTER_TRANSFORMED, false, 0, next.id))
 	return true
 
 
@@ -268,7 +268,7 @@ func _check_end(events: Array[BattleEvent]) -> bool:
 	if not monster.is_alive() and _try_transform(events):
 		return false
 	if not monster.is_alive():
-		events.append(BattleEvent.new(BattleEvent.Kind.MONSTER_DEFEATED, true, 0, monster.display_name))
+		events.append(BattleEvent.new(BattleEvent.Kind.MONSTER_DEFEATED, true, 0, monster.id))
 		result = Result.HERO_WON
 		if monster.monster != null:
 			exp_reward = monster.monster.exp_reward

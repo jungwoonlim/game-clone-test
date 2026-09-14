@@ -19,9 +19,16 @@ var text_speed: int = 1
 ## drive both; this only decides which scene the title screen opens.
 var view_mode: int = 0
 
+## Index into LOCALES. Applied to the TranslationServer on load, so the very
+## first frame the title screen draws is already in the player's language.
+var language: int = 0
+
+const LOCALES := ["en", "ko"]
+const LOCALE_KEYS := ["SET_LANG_EN", "SET_LANG_KO"]
+
 const VIEW_NAMES := ["2D", "2.5D"]
 const VIEW_SCENES := ["res://scenes/main.tscn", "res://scenes/main_3d.tscn"]
-const TEXT_SPEED_NAMES := ["SLOW", "NORMAL", "FAST"]
+const TEXT_SPEED_NAMES := ["SET_SLOW", "SET_NORMAL", "SET_FAST"]
 const TEXT_SPEED_CPS := [45.0, 90.0, 200.0]
 
 
@@ -37,7 +44,18 @@ func load_settings() -> void:
 		fullscreen = bool(config.get_value("video", "fullscreen", false))
 		text_speed = clampi(int(config.get_value("text", "speed", 1)), 0, 2)
 		view_mode = clampi(int(config.get_value("video", "view_mode", 0)), 0, 1)
+		language = clampi(int(config.get_value("text", "language", _system_language())),
+				0, LOCALES.size() - 1)
+	else:
+		language = _system_language()
 	apply()
+
+
+## First run follows the machine. A Korean desktop should not have to find the
+## settings menu before it can read the title screen.
+func _system_language() -> int:
+	var found := LOCALES.find(OS.get_locale_language())
+	return found if found >= 0 else 0
 
 
 func save_settings() -> void:
@@ -47,11 +65,13 @@ func save_settings() -> void:
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("text", "speed", text_speed)
 	config.set_value("video", "view_mode", view_mode)
+	config.set_value("text", "language", language)
 	config.save(PATH)
 
 
 ## Pushes the current values at the audio server and the window.
 func apply() -> void:
+	TranslationServer.set_locale(LOCALES[clampi(language, 0, LOCALES.size() - 1)])
 	var director := get_node_or_null("/root/AudioDirector") if is_inside_tree() else null
 	if director != null:
 		director.apply_volumes(music_volume, sfx_volume)
@@ -88,12 +108,22 @@ func cycle_view_mode(direction: int) -> void:
 	save_settings()
 
 
+func language_name() -> String:
+	return TranslationServer.translate(LOCALE_KEYS[clampi(language, 0, LOCALES.size() - 1)])
+
+
+func cycle_language(direction: int) -> void:
+	language = wrapi(language + direction, 0, LOCALES.size())
+	apply()
+	save_settings()
+
+
 func chars_per_second() -> float:
 	return TEXT_SPEED_CPS[clampi(text_speed, 0, 2)]
 
 
 func text_speed_name() -> String:
-	return TEXT_SPEED_NAMES[clampi(text_speed, 0, 2)]
+	return TranslationServer.translate(TEXT_SPEED_NAMES[clampi(text_speed, 0, 2)])
 
 
 func cycle_text_speed(direction: int) -> void:

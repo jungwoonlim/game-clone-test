@@ -41,9 +41,18 @@ func _initialize() -> void:
 	Engine.time_scale = 8.0
 	SaveGame.erase()
 	var scene_path := _scene_path()
-	print("[smoke-view] scene: %s" % scene_path)
+	print("[smoke-view] scene: %s  locale: %s" % [scene_path, _locale()])
 	_main = load(scene_path).instantiate()
 	root.add_child(_main)
+
+
+## A whole playthrough in Korean is the only way to catch a menu that no
+## longer fits its window, or a line that only crashes in one language.
+func _locale() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.length() == 2 and not argument.begins_with("res://"):
+			return argument
+	return "en"
 
 
 func _scene_path() -> String:
@@ -59,6 +68,8 @@ func _process(_delta: float) -> bool:
 	if _frames > FRAME_BUDGET:
 		_failures.append("ran out of frames in phase %s" % Phase.keys()[_phase])
 		return _finish()
+	if _frames == 1:
+		Loc.force_locale(root, _locale())
 	if _frames < 4:
 		return false
 

@@ -1,91 +1,106 @@
 ## Turns core's BattleEvent stream into player-facing lines.
 ##
-## All wording lives here; core only emits enum kinds and numbers. Localisation
-## later means touching this file and nothing in core/.
+## All wording lives here; core only emits enum kinds, numbers and ids. That is
+## what makes the game translatable without touching a line of core/ — the
+## event says SPELL_CAST with the id `heal`, and this decides whether the
+## player reads "You cast Heal!" or "그대는 호이미를 외웠다!".
 class_name BattleText
 extends RefCounted
 
 
-static func describe(event: BattleEvent, hero_name: String, monster_name: String) -> String:
-	# `by_hero` says who acted; the target is whoever did not.
+## `monster_name` is already translated by the caller, which knows which of a
+## boss's forms is on screen right now.
+static func describe(event: BattleEvent, monster_name: String,
+		db: GameDatabase = null) -> String:
 	var actor_is_hero := event.by_hero
 	var target_is_hero := not event.by_hero
-	var actor := _subject(actor_is_hero, hero_name, monster_name)
-	var target := _subject(target_is_hero, hero_name, monster_name)
 
 	match event.kind:
 		BattleEvent.Kind.BATTLE_START:
-			return "A %s draws near!" % event.label
+			return Loc.t("BT_BATTLE_START", {"monster": monster_name})
 		BattleEvent.Kind.MONSTER_FIRST:
-			return "%s strikes first!" % monster_name
+			return Loc.t("BT_MONSTER_FIRST", {"monster": monster_name})
 		BattleEvent.Kind.ATTACK:
-			return "%s %s!" % [actor, _verb(actor_is_hero, "attack", "attacks")]
+			return _side("BT_ATTACK", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.CRITICAL:
-			return "%s %s an excellent blow!" % [actor, _verb(actor_is_hero, "land", "lands")]
+			return _side("BT_CRITICAL", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.DAMAGE:
-			return "%s %s %d damage." % [target, _verb(target_is_hero, "take", "takes"), event.amount]
+			return _side("BT_DAMAGE", target_is_hero,
+					{"target": monster_name, "amount": event.amount})
 		BattleEvent.Kind.NO_DAMAGE:
-			return "%s %s unharmed." % [target, _verb(target_is_hero, "are", "is")]
+			return _side("BT_NO_DAMAGE", target_is_hero, {"target": monster_name})
 		BattleEvent.Kind.SPELL_CAST:
-			return "%s %s %s!" % [actor, _verb(actor_is_hero, "cast", "casts"), event.label]
+			return _side("BT_SPELL", actor_is_hero,
+					{"actor": monster_name, "spell": _spell(db, event.subject)})
 		BattleEvent.Kind.SPELL_SEALED:
-			return "%s magic is sealed." % _possessive(actor_is_hero, monster_name)
+			return _side("BT_SPELL_SEALED", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.SPELL_RESISTED:
-			return "%s %s." % [target, _verb(target_is_hero, "resist", "resists")]
+			return _side("BT_RESISTED", target_is_hero, {"target": monster_name})
 		BattleEvent.Kind.SPELL_UNAVAILABLE:
-			return "Nothing happens."
+			return Loc.t("BT_SPELL_UNAVAILABLE")
 		BattleEvent.Kind.NOT_ENOUGH_MP:
-			return "Not enough MP."
+			return Loc.t("BT_NOT_ENOUGH_MP")
 		BattleEvent.Kind.HEAL:
-			return "%s %s %d HP." % [actor, _verb(actor_is_hero, "recover", "recovers"), event.amount]
+			return _side("BT_HEAL", actor_is_hero,
+					{"actor": monster_name, "amount": event.amount})
 		BattleEvent.Kind.SLEEP_APPLIED:
-			return "%s %s asleep." % [target, _verb(target_is_hero, "fall", "falls")]
+			return _side("BT_SLEEP_APPLIED", target_is_hero, {"target": monster_name})
 		BattleEvent.Kind.SLEEP_SKIP:
-			return "%s %s asleep." % [actor, _verb(actor_is_hero, "are", "is")]
+			return _side("BT_SLEEP_SKIP", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.SLEEP_WAKE:
-			return "%s %s up." % [actor, _verb(actor_is_hero, "wake", "wakes")]
+			return _side("BT_SLEEP_WAKE", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.STOPSPELL_APPLIED:
-			return "%s magic is blocked!" % _possessive(target_is_hero, monster_name)
+			return _side("BT_STOPSPELL", target_is_hero, {"target": monster_name})
 		BattleEvent.Kind.ITEM_USED:
-			return "%s %s %s. +%d HP." % [
-				actor, _verb(actor_is_hero, "use", "uses"), event.label, event.amount]
+			return _side("BT_ITEM_USED", actor_is_hero, {
+				"actor": monster_name,
+				"item": _item(db, event.subject),
+				"amount": event.amount,
+			})
 		BattleEvent.Kind.ITEM_UNAVAILABLE:
-			return "Nothing to use."
+			return Loc.t("BT_ITEM_UNAVAILABLE")
 		BattleEvent.Kind.ITEM_NO_EFFECT:
-			return "%s %s %s, but nothing happens." % [
-				actor, _verb(actor_is_hero, "hold up", "holds up"), event.label]
+			return _side("BT_ITEM_NO_EFFECT", actor_is_hero,
+					{"actor": monster_name, "item": _item(db, event.subject)})
 		BattleEvent.Kind.FLEE_SUCCESS:
-			return "%s %s!" % [actor, _verb(actor_is_hero, "flee", "flees")]
+			return _side("BT_FLEE_SUCCESS", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.FLEE_BLOCKED:
-			return "There is no escape!"
+			return Loc.t("BT_FLEE_BLOCKED")
 		BattleEvent.Kind.FLEE_FAIL:
-			return "%s cannot escape!" % actor
+			return _side("BT_FLEE_FAIL", actor_is_hero, {"actor": monster_name})
 		BattleEvent.Kind.MONSTER_TRANSFORMED:
-			return "%s rises in its true form!" % event.label
+			return Loc.t("BT_TRANSFORMED", {"monster": _monster(db, event.subject)})
 		BattleEvent.Kind.MONSTER_DEFEATED:
-			return "%s is defeated!" % event.label
+			return _side("BT_DEFEATED", false, {"target": _monster(db, event.subject)})
 		BattleEvent.Kind.HERO_DEFEATED:
-			return "%s have fallen..." % hero_name
+			return _side("BT_DEFEATED", true, {})
 		BattleEvent.Kind.EXP_GAINED:
-			return "%d experience gained." % event.amount
+			return Loc.t("BT_EXP", {"amount": event.amount})
 		BattleEvent.Kind.GOLD_GAINED:
-			return "%d gold gained." % event.amount
+			return Loc.t("BT_GOLD", {"amount": event.amount})
 		BattleEvent.Kind.LEVEL_UP:
-			return "Level %d!" % event.amount
+			return Loc.t("BT_LEVEL_UP", {"amount": event.amount})
 		BattleEvent.Kind.SPELL_LEARNED:
-			return "Learned %s!" % event.label
+			return Loc.t("BT_SPELL_LEARNED", {"spell": _spell(db, event.subject)})
 		_:
 			return ""
 
 
-static func _subject(is_hero: bool, hero_name: String, monster_name: String) -> String:
-	return hero_name if is_hero else monster_name
+## English conjugates for the hero ("You attack") and against the monster
+## ("the Slime attacks"); Korean puts the difference in the subject instead.
+## Either way the two readings are two keys, so a translator never has to
+## reproduce another language's grammar.
+static func _side(base: String, is_hero: bool, args: Dictionary) -> String:
+	return Loc.t(base + ("_YOU" if is_hero else "_IT"), args)
 
 
-static func _possessive(is_hero: bool, monster_name: String) -> String:
-	return "Your" if is_hero else "%s's" % monster_name
+static func _spell(db: GameDatabase, id: StringName) -> String:
+	return Loc.spell_name(db.spell(id)) if db != null else String(id)
 
 
-## "You attack" but "the Slime attacks".
-static func _verb(is_hero: bool, second_person: String, third_person: String) -> String:
-	return second_person if is_hero else third_person
+static func _item(db: GameDatabase, id: StringName) -> String:
+	return Loc.item_name(db.item(id)) if db != null else String(id)
+
+
+static func _monster(db: GameDatabase, id: StringName) -> String:
+	return Loc.monster_name(db.monster(id)) if db != null else String(id)

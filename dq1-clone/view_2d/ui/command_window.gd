@@ -6,7 +6,8 @@ extends DQWindow
 
 signal chosen(index: int)
 
-const CURSOR := "▶"
+## How far the labels sit from the frame, leaving room for the cursor.
+const TEXT_INDENT := 14.0
 const DISABLED := Color(0.45, 0.45, 0.42)
 
 var _labels: Array[String] = []
@@ -69,7 +70,7 @@ func _measure_width() -> float:
 			text += "   " + _suffixes[i]
 		widest = maxf(widest, font().get_string_size(
 				text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x)
-	return widest + PAD.x * 2.0 + 14.0
+	return widest + PAD.x * 2.0 + TEXT_INDENT
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -116,7 +117,7 @@ func _draw() -> void:
 	for i in _labels.size():
 		var color := BORDER if _is_enabled(i) else DISABLED
 		if i == _index:
-			draw_text(i, CURSOR, color)
-		draw_text(i, _labels[i], color, 12.0)
+			draw_cursor(i, color)
+		draw_text(i, _labels[i], color, TEXT_INDENT)
 		if i < _suffixes.size() and _suffixes[i] != "":
 			draw_text_right(i, _suffixes[i], color)

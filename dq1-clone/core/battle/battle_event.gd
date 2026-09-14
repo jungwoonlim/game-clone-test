@@ -42,14 +42,17 @@ var kind: Kind
 ## True when the hero caused this event, false when the monster did.
 var by_hero: bool
 var amount: int
-var label: String
+## The id of the monster, spell or item the line is about — never its name.
+## core has no opinion about wording or language; the view looks the id up.
+var subject: StringName = &""
 
 
-func _init(p_kind: Kind, p_by_hero: bool = true, p_amount: int = 0, p_label: String = "") -> void:
+func _init(p_kind: Kind, p_by_hero: bool = true, p_amount: int = 0,
+		p_subject: StringName = &"") -> void:
 	kind = p_kind
 	by_hero = p_by_hero
 	amount = p_amount
-	label = p_label
+	subject = p_subject
 
 
 func _to_string() -> String:
@@ -57,6 +60,6 @@ func _to_string() -> String:
 	var out := "%s[%s]" % [Kind.keys()[kind], who]
 	if amount != 0:
 		out += " %d" % amount
-	if label != "":
-		out += " %s" % label
+	if subject != &"":
+		out += " %s" % subject
 	return out

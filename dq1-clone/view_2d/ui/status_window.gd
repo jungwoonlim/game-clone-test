@@ -22,13 +22,13 @@ func set_values(level: int, hp: int, max_hp: int, mp: int, max_mp: int, gold: in
 
 func _draw() -> void:
 	super()
-	draw_text(0, "LV")
+	draw_text(0, Loc.t("STAT_LV"))
 	draw_text_right(0, str(_level))
-	draw_text(1, "HP")
+	draw_text(1, Loc.t("STAT_HP"))
 	draw_text_right(1, "%d/%d" % [_hp, _max_hp], _hp_color())
-	draw_text(2, "MP")
+	draw_text(2, Loc.t("STAT_MP"))
 	draw_text_right(2, "%d/%d" % [_mp, _max_mp])
-	draw_text(3, "G")
+	draw_text(3, Loc.t("STAT_G"))
 	draw_text_right(3, str(_gold))
 
 

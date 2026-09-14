@@ -11,18 +11,20 @@ func _ready() -> void:
 	if director != null:
 		director.play_bgm("bgm_town")
 	_refresh_save_note()
+	_retitle()
 	_run_menu()
 
 
 func _refresh_save_note() -> void:
-	_save_note.text = "" if SaveGame.has_save() else "no journal recorded yet"
+	_save_note.text = "" if SaveGame.has_save() else Loc.t("TITLE_NO_SAVE")
 
 
 func _run_menu() -> void:
 	while true:
 		var has_save := SaveGame.has_save()
 		var pick := await _menu.open_menu(
-				["CONTINUE", "NEW QUEST", "SETTINGS", "QUIT"],
+				[Loc.t("TITLE_CONTINUE"), Loc.t("TITLE_NEW"),
+				Loc.t("TITLE_SETTINGS"), Loc.t("TITLE_QUIT")],
 				[], [has_save, true, true, true], false)
 		match pick:
 			0:
@@ -33,10 +35,18 @@ func _run_menu() -> void:
 				return
 			2:
 				await _settings.open_settings()
+				# The language may have just changed under the menu.
 				_refresh_save_note()
+				_retitle()
 			3:
 				get_tree().quit()
 				return
+
+
+## Redraws the parts of the title screen that are not the menu itself.
+func _retitle() -> void:
+	$Subtitle.text = Loc.t("TITLE_SUBTITLE")
+	$Hint.text = Loc.t("TITLE_HINT")
 
 
 ## Which scene opens is a setting, not a build: the 2D and 2.5D views share the

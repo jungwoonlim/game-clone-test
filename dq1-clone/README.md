@@ -5,7 +5,7 @@
 > **현재 상태: M0~M7 완료.** 타이틀에서 시작해 마을에서 장비를 사고, 여관에서 자고,
 > 왕에게 세이브하고, 필드에서 레벨을 올려 던전 2층의 마왕을 쓰러뜨리는 것까지
 > 사운드와 음악이 붙은 채로 플레이되며, **설정에서 2D / 2.5D 렌더러를 골라** 같은
-> 게임을 양쪽으로 즐길 수 있습니다.
+> 게임을 양쪽으로 즐길 수 있습니다. **한국어와 영어**를 설정에서 전환할 수 있습니다.
 
 | 타이틀 | 설정 |
 | --- | --- |
@@ -16,6 +16,8 @@
 | ![dungeon](docs/screenshot-dungeon.png) | ![battle](docs/screenshot-battle.png) |
 | **보스 2페이즈** | **피격 연출** |
 | ![boss](docs/screenshot-boss.png) | ![damage](docs/screenshot-damage.png) |
+| **시스템 메뉴 — 설정 · 타이틀 · 종료** | |
+| ![system](docs/screenshot-system.png) | |
 
 ### 2.5D (M7) — 같은 게임, 렌더러만 교체
 
@@ -34,8 +36,10 @@
 | 이동 | 방향키 |
 | 메뉴 열기 / 확인 | Space, Enter, Z |
 | 취소 | Esc, X |
+| 시스템 메뉴 (설정 · 타이틀 · 종료) | Esc, 또는 메뉴 → 시스템 |
 | 설정 값 조절 | ← → |
-| 렌더러 전환 | 설정 → VIEW (2D / 2.5D) |
+| 렌더러 전환 | 설정 → 화면 (2D / 2.5D) |
+| 언어 전환 | 설정 → 언어 (한국어 / ENGLISH) |
 | 메시지 넘기기 | 아무 키 |
 
 필드 메뉴: `TALK` `TAKE` `STATUS` `SPELL` `ITEM` `EQUIP` · 전투 메뉴: `FIGHT` `SPELL` `ITEM` `RUN`
@@ -101,6 +105,9 @@ M3(전투 화면)과 M7(2.5D 리메이크) 둘 다 **`core/` 변경 0줄**로 �
 G=godot   # 4.4+
 
 # 에셋·데이터 시딩 — 최초 1회, 또는 다시 만들 때만
+python3 tools/build_font.py                                   # 한글 글꼴 내려받아 서브셋
+$G --headless --path . --import
+$G --headless --path . --script res://tools/build_font.gd
 $G --headless --path . --script res://tools/build_tiles.gd
 $G --headless --path . --script res://tools/build_sprites.gd
 $G --headless --path . --script res://tools/build_audio.gd
@@ -108,21 +115,27 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 1,534 checks (플레이스루 32건 별도)
+# 상시 검증 — 합계 2,889 checks (플레이스루 64건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
-$G --headless --path . --script res://tools/test_core.gd          # 236
-$G --headless --path . --script res://tools/test_architecture.gd  # 400
-$G --headless --path . --script res://tools/test_presentation.gd  # 249
+$G --headless --path . --script res://tools/test_core.gd          # 239
+$G --headless --path . --script res://tools/test_architecture.gd  # 508
+$G --headless --path . --script res://tools/test_presentation.gd  # 1493
 
-# 전체 플레이스루를 두 렌더러 모두에 대해
-$G --headless --path . --script res://tools/smoke_view.gd                                  # 16
-$G --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn     # 16
+# 전체 플레이스루를 두 렌더러 × 두 언어 모두에 대해 (각 16)
+$G --headless --path . --script res://tools/smoke_view.gd
+$G --headless --path . --script res://tools/smoke_view.gd -- ko
+$G --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn
+$G --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn ko
 
 # 퍼징 — 무작위 행동 16만 번에 대해 불변식 230만 건 (약 9초)
 $G --headless --path . --script res://tools/fuzz_core.gd -- 400 400
 
 # 밸런스 리포트 → docs/07-BALANCE_REPORT.md
 $G --headless --path . --script res://tools/simulate_balance.gd
+
+# 문서 스크린샷 다시 찍기 → docs/screenshot-*.png
+xvfb-run -a $G --path . --rendering-driver opengl3 \
+    --script res://tools/capture_screens.gd -- ko
 ```
 
 `fuzz_core.gd`는 **불변식**을 검사합니다 — HP/MP/골드 범위, 레벨과 누적 경험치의 일치,
@@ -163,6 +176,7 @@ $G --headless --path . --script res://tools/simulate_balance.gd
 | [08-ASSETS.md](docs/08-ASSETS.md) | 에셋 생성 파이프라인과 교체 방법 |
 | [09-2_5D.md](docs/09-2_5D.md) | 2.5D 리메이크 — 무엇을 바꿨고 무엇을 안 바꿨나 |
 | [10-BUGHUNT.md](docs/10-BUGHUNT.md) | 퍼징과 정독으로 잡은 버그 5개 |
+| [11-I18N.md](docs/11-I18N.md) | 한글화 — core를 한 줄도 안 바꾸고 |
 
 ## 주의
 

@@ -97,7 +97,7 @@ func _sync_after(events: Array[BattleEvent]) -> void:
 			events.append(BattleEvent.new(BattleEvent.Kind.LEVEL_UP, true, level))
 		for spell in gained["spells"]:
 			events.append(BattleEvent.new(
-					BattleEvent.Kind.SPELL_LEARNED, true, 0, spell.display_name))
+					BattleEvent.Kind.SPELL_LEARNED, true, 0, spell.id))
 
 	var finished_result := battle.result
 	_pending_boss_flag = &""

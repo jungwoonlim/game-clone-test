@@ -29,6 +29,7 @@ var _checks := 0
 
 func _initialize() -> void:
 	_test_core_is_renderer_free()
+	_test_core_is_language_free()
 	_test_field_views_match_controller()
 	_test_scenes_share_controller_and_ui()
 
@@ -81,6 +82,20 @@ func _test_core_is_renderer_free() -> void:
 		for base in VIEW_BASES:
 			_check(not text.contains("%s.new()" % base),
 					"%s constructs a %s" % [path, base])
+
+
+# --- 규칙 1b: core 는 언어도 모른다 ----------------------------------------
+
+## The same rule as the renderer, one layer over: core holds ids, numbers and
+## event kinds, and the view decides what they read as. A `tr()` in core would
+## mean the logic and the wording could no longer move apart — which is
+## exactly what made adding Korean a view-only change.
+func _test_core_is_language_free() -> void:
+	for path in _scripts_in(CORE_DIR):
+		var text := FileAccess.get_file_as_string(path)
+		for forbidden in ["Loc.", "TranslationServer", "tr(", "atr("]:
+			_check(not text.contains(forbidden),
+					"%s translates text (%s)" % [path, forbidden])
 
 
 # --- 규칙 2: 두 필드 뷰는 서로 대체 가능하다 ------------------------------

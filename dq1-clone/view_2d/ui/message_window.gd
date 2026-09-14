@@ -27,16 +27,24 @@ func request_skip() -> void:
 		_skip = true
 
 
+## An empty message window is not a message window — it is a black box sitting
+## over the map for no reason. Clearing takes the frame away with the text.
 func clear() -> void:
 	_lines.clear()
 	_partial = ""
+	hide()
 	queue_redraw()
 
 
 ## Hidden while walking so it never covers the party — in a dark dungeon the
 ## window would otherwise sit right on top of the only lit tiles.
+##
+## It forgets what it was saying as well as hiding: a conversation ends when
+## the player walks away from it. Merely hiding left the old lines in place,
+## so the next unrelated line — a place name, a swamp burn — came back up
+## underneath somebody else's half of a conversation from two rooms ago.
 func dismiss() -> void:
-	hide()
+	clear()
 
 
 ## Adds a line with no animation. For field chatter that should not block.

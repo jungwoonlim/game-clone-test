@@ -57,13 +57,16 @@ dq1-clone/
     ├── build_sprites.gd       몬스터·캐릭터 스프라이트 생성
     ├── build_audio.gd         효과음·BGM 합성
     ├── build_data.gd          .tres 데이터 + TileSet 시딩
+    ├── build_font.py          한글 글꼴 내려받기 + 서브셋 (Python)
+    ├── build_font.gd          Theme 생성
     ├── validate_data.gd       데이터 정합성 (649 checks)
-    ├── test_core.gd           core 동작 (236 checks)
-    ├── test_architecture.gd   core/view 규칙 검사 (400 checks)
-    ├── test_presentation.gd   에셋·설정·타이틀·연출 (249 checks)
+    ├── test_core.gd           core 동작 (239 checks)
+    ├── test_architecture.gd   core/view 규칙 검사 (508 checks)
+    ├── test_presentation.gd   에셋·설정·연출·번역 (1,493 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
     ├── fuzz_core.gd           무작위 행동 퍼징 + 불변식 (약 230만 checks)
-    └── smoke_view.gd          전체 플레이스루 (16 checks, 씬을 인자로 받음)
+    ├── capture_screens.gd     docs/ 스크린샷 재생성
+    └── smoke_view.gd          전체 플레이스루 (16 checks, 씬과 언어를 인자로)
 ```
 
 ## 화면의 소유권

@@ -28,6 +28,7 @@ const HP_BAR_WIDTH := 120.0
 @onready var _hp_fill: ColorRect = $UI/Battle/HpFill
 @onready var _hp_text: Label = $UI/Battle/HpText
 @onready var _detail: DetailWindow = $UI/Detail
+@onready var _settings: SettingsWindow = $UI/Settings
 @onready var _backdrop: Control = $UI/Battle/Backdrop
 @onready var _flash_rect: ColorRect = $UI/Flash
 
@@ -47,7 +48,7 @@ var _booted := false
 func _ready() -> void:
 	_session = GameSession.create_new(randi())
 	if _session == null:
-		_message.push("No database. Run tools/build_data.gd.")
+		_message.push(Loc.t("MSG_NO_DATABASE"))
 		return
 
 	_session.encounter_started.connect(_on_encounter_started)
@@ -72,9 +73,9 @@ func _intro() -> void:
 	_enter_busy()
 	if not _session.has_flag(&"hint_start"):
 		_session.set_flag(&"hint_start")
-		await _message.play("Thy quest begins in the castle town.")
-		await _message.play("Speak with the King upon the throne.")
-	await _message.play("ARROWS walk.   SPACE opens the menu.")
+		await _message.play(Loc.t("MSG_INTRO_1"))
+		await _message.play(Loc.t("MSG_INTRO_2"))
+	await _message.play(Loc.t("MSG_INTRO_3"))
 	_exit_busy()
 
 
@@ -123,10 +124,10 @@ func _map_bgm() -> String:
 ## The one line that tells a new player what to do next.
 func _quest_line() -> String:
 	if not _session.has_flag(&"heard_quest"):
-		return "Speak with the King"
+		return Loc.t("QUEST_KING")
 	if not _session.has_flag(&"dragonlord_defeated"):
-		return "Enter the cave, east"
-	return "Return to the castle"
+		return Loc.t("QUEST_CAVE")
+	return Loc.t("QUEST_RETURN")
 
 
 func _process(_delta: float) -> void:
@@ -160,18 +161,71 @@ func _unhandled_input(event: InputEvent) -> void:
 	_message.request_skip()
 	_awaiting_key = false
 
-	if not is_busy() and not _field.is_walking() \
-			and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER
-				or event.keycode == KEY_KP_ENTER or event.keycode == KEY_Z):
+	if is_busy() or _field.is_walking():
+		return
+	if event.keycode == KEY_SPACE or event.keycode == KEY_ENTER \
+			or event.keycode == KEY_KP_ENTER or event.keycode == KEY_Z:
 		_open_field_menu()
+	elif event.keycode == KEY_ESCAPE:
+		_open_system_menu()
+
+
+# --- 시스템 메뉴 ----------------------------------------------------------
+
+## ESCAPE reaches it directly, because that is the key a player already tries
+## when they want out.
+func _open_system_menu() -> void:
+	_enter_busy()
+	_message.clear()
+	await _do_system_menu()
+	_exit_busy()
+
+
+## Every way out of the game lives here. Until this existed the only way to
+## stop playing was to close the window, and there was no way back to the
+## title screen at all.
+func _do_system_menu() -> void:
+	var pick := await _submenu.open_menu([
+		Loc.t("SYS_SETTINGS"), Loc.t("SYS_TITLE"), Loc.t("SYS_QUIT")])
+	match pick:
+		0:
+			await _settings.open_settings()
+			_relabel()
+		1:
+			if await _confirm("MSG_CONFIRM_TITLE"):
+				get_tree().change_scene_to_file("res://scenes/title.tscn")
+		2:
+			if await _confirm("MSG_CONFIRM_QUIT"):
+				get_tree().quit()
+
+
+## Both ways out throw away everything since the last visit to the King, so
+## both say so and both start on NO.
+func _confirm(key: String) -> bool:
+	await _message.play(Loc.t(key))
+	await _message.play(Loc.t("MSG_UNSAVED"))
+	var pick := await _submenu.open_menu([Loc.t("MENU_NO"), Loc.t("MENU_YES")])
+	return pick == 1
+
+
+## Switching language mid-game changes text that is already on screen.
+func _relabel() -> void:
+	_message.clear()
+	_place.text = Loc.map_name(_session.world.map)
+	_status.queue_redraw()
 
 
 # --- 필드 메뉴 ------------------------------------------------------------
 
 func _open_field_menu() -> void:
 	_enter_busy()
-	var pick := await _command.open_menu(
-			["TALK", "TAKE", "STATUS", "SPELL", "ITEM", "EQUIP"])
+	# A menu opens a new conversation; whatever the last one said is done.
+	_message.clear()
+	var pick := await _command.open_menu([
+		Loc.t("MENU_TALK"), Loc.t("MENU_TAKE"), Loc.t("MENU_STATUS"),
+		Loc.t("MENU_SPELL"), Loc.t("MENU_ITEM"), Loc.t("MENU_EQUIP"),
+		Loc.t("MENU_SYSTEM"),
+	])
 	match pick:
 		0:
 			await _do_talk()
@@ -185,19 +239,21 @@ func _open_field_menu() -> void:
 			await _do_use_item()
 		5:
 			await _do_equip()
+		6:
+			await _do_system_menu()
 	_exit_busy()
 
 
 func _do_talk() -> void:
 	var npc := _session.npc_in_front()
 	if npc == null:
-		await _message.play("There is no one there.")
+		await _message.play(Loc.t("MSG_NO_ONE"))
 		return
 
 	var entry := _session.talk_to(npc)
 	if entry != null:
 		for line in entry.lines:
-			await _message.play(line)
+			await _message.play(Loc.t(line))
 
 	match npc.role:
 		"shop":
@@ -211,17 +267,17 @@ func _do_talk() -> void:
 func _do_status() -> void:
 	var hero := _session.hero
 	_detail.show_rows([
-		["QUEST", _quest_line()],
-		["LEVEL", str(hero.level)],
-		["EXP", str(hero.total_exp)],
-		["NEXT", _exp_to_next_text()],
-		["STRENGTH", str(hero.strength)],
-		["AGILITY", str(hero.agility)],
-		["ATTACK", str(hero.attack_power(_session.db))],
-		["DEFENCE", str(hero.defense_power(_session.db))],
-		["WEAPON", _item_name(hero.weapon_id)],
-		["ARMOUR", _item_name(hero.armor_id)],
-		["SHIELD", _item_name(hero.shield_id)],
+		[Loc.t("STAT_QUEST"), _quest_line()],
+		[Loc.t("STAT_LEVEL"), str(hero.level)],
+		[Loc.t("STAT_EXP"), str(hero.total_exp)],
+		[Loc.t("STAT_NEXT"), _exp_to_next_text()],
+		[Loc.t("STAT_STRENGTH"), str(hero.strength)],
+		[Loc.t("STAT_AGILITY"), str(hero.agility)],
+		[Loc.t("STAT_ATTACK"), str(hero.attack_power(_session.db))],
+		[Loc.t("STAT_DEFENCE"), str(hero.defense_power(_session.db))],
+		[Loc.t("STAT_WEAPON"), _item_name(hero.weapon_id)],
+		[Loc.t("STAT_ARMOUR"), _item_name(hero.armor_id)],
+		[Loc.t("STAT_SHIELD"), _item_name(hero.shield_id)],
 	])
 	await _wait_for_key("")
 	_detail.hide()
@@ -234,7 +290,7 @@ func _exp_to_next_text() -> String:
 
 func _item_name(id: StringName) -> String:
 	var item := _session.db.item(id)
-	return item.display_name if item != null else "none"
+	return Loc.item_name(item) if item != null else Loc.t("STAT_NONE")
 
 
 # --- 상점 / 여관 / 왕 ------------------------------------------------------
@@ -244,9 +300,9 @@ func _do_shop(npc: NpcPlacement) -> void:
 	if shop == null:
 		return
 	while true:
-		var pick := await _submenu.open_menu(["BUY", "SELL"])
+		var pick := await _submenu.open_menu([Loc.t("MENU_BUY"), Loc.t("MENU_SELL")])
 		if pick < 0:
-			await _message.play("Come again.")
+			await _message.play(Loc.t("MSG_SHOP_BYE"))
 			return
 		if pick == 0:
 			await _shop_buy(shop)
@@ -260,8 +316,8 @@ func _shop_buy(shop: ShopData) -> void:
 	var affordable: Array[bool] = []
 	for id in shop.stock:
 		var item := _session.db.item(id)
-		labels.append(item.display_name)
-		prices.append("%d G" % item.buy_price)
+		labels.append(Loc.item_name(item))
+		prices.append(Loc.t("FMT_GOLD", {"gold": item.buy_price}))
 		affordable.append(_session.hero.gold >= item.buy_price)
 
 	var pick := await _submenu.open_menu(labels, prices, affordable)
@@ -271,28 +327,28 @@ func _shop_buy(shop: ShopData) -> void:
 	var item := _session.db.item(chosen_id)
 	match _session.buy(chosen_id):
 		TownServices.Result.OK:
-			await _message.play("%s. A fine choice." % item.display_name)
+			await _message.play(Loc.t("MSG_SHOP_BOUGHT", {"item": Loc.item_name(item)}))
 		TownServices.Result.NOT_ENOUGH_GOLD:
-			await _message.play("Thou hast not enough gold.")
+			await _message.play(Loc.t("MSG_NOT_ENOUGH_GOLD"))
 		TownServices.Result.INVENTORY_FULL:
-			await _message.play("Thou canst carry no more.")
+			await _message.play(Loc.t("MSG_BAG_FULL"))
 		_:
-			await _message.play("I cannot sell thee that.")
+			await _message.play(Loc.t("MSG_CANNOT_SELL"))
 	_refresh_status()
 
 
 func _shop_sell() -> void:
 	var bag := _session.hero.inventory
 	if bag.is_empty():
-		await _message.play("Thou hast nothing to sell.")
+		await _message.play(Loc.t("MSG_NOTHING_TO_SELL"))
 		return
 
 	var labels: Array[String] = []
 	var prices: Array[String] = []
 	for id in bag:
 		var item := _session.db.item(id)
-		labels.append(item.display_name)
-		prices.append("%d G" % item.sell_price)
+		labels.append(Loc.item_name(item))
+		prices.append(Loc.t("FMT_GOLD", {"gold": item.sell_price}))
 
 	var pick := await _submenu.open_menu(labels, prices)
 	if pick < 0:
@@ -300,32 +356,33 @@ func _shop_sell() -> void:
 	var chosen_id: StringName = bag[pick]
 	var item := _session.db.item(chosen_id)
 	if _session.sell(chosen_id) == TownServices.Result.OK:
-		await _message.play("%d gold for the %s." % [item.sell_price, item.display_name])
+		await _message.play(Loc.t("MSG_SHOP_SOLD",
+				{"gold": item.sell_price, "item": Loc.item_name(item)}))
 	_refresh_status()
 
 
 func _do_inn(npc: NpcPlacement) -> void:
-	await _message.play("A night's rest is %d gold. Stay?" % npc.inn_price)
-	var pick := await _submenu.open_menu(["YES", "NO"])
+	await _message.play(Loc.t("MSG_INN_OFFER", {"gold": npc.inn_price}))
+	var pick := await _submenu.open_menu([Loc.t("MENU_YES"), Loc.t("MENU_NO")])
 	if pick != 0:
-		await _message.play("Fare thee well.")
+		await _message.play(Loc.t("MSG_INN_DECLINE"))
 		return
 	match _session.rest(npc.inn_price):
 		TownServices.Result.OK:
-			await _message.play("Good morning. Thou seemest well.")
+			await _message.play(Loc.t("MSG_INN_MORNING"))
 		TownServices.Result.NOT_ENOUGH_GOLD:
-			await _message.play("Thou hast not enough gold.")
+			await _message.play(Loc.t("MSG_NOT_ENOUGH_GOLD"))
 		TownServices.Result.ALREADY_FULL_HEALTH:
-			await _message.play("Thou needest no rest.")
+			await _message.play(Loc.t("MSG_INN_NO_NEED"))
 	_refresh_status()
 
 
 func _do_king() -> void:
 	if _session.save_game() == OK:
 		_sfx("sfx_confirm")
-		await _message.play("Thy deeds are recorded.")
+		await _message.play(Loc.t("MSG_SAVED"))
 	else:
-		await _message.play("The scribe has lost his quill.")
+		await _message.play(Loc.t("MSG_SAVE_FAILED"))
 
 
 # --- 주문 / 도구 / 장비 (필드) ---------------------------------------------
@@ -336,15 +393,15 @@ func _do_field_spell() -> void:
 		if spell.usable_in_field:
 			spells.append(spell)
 	if spells.is_empty():
-		await _message.play("Thou knowest no such spell.")
+		await _message.play(Loc.t("MSG_NO_SPELLS"))
 		return
 
 	var labels: Array[String] = []
 	var costs: Array[String] = []
 	var affordable: Array[bool] = []
 	for spell in spells:
-		labels.append(spell.display_name)
-		costs.append("%d MP" % spell.mp_cost)
+		labels.append(Loc.spell_name(spell))
+		costs.append(Loc.t("FMT_MP", {"mp": spell.mp_cost}))
 		affordable.append(_session.hero.mp >= spell.mp_cost)
 
 	var pick := await _submenu.open_menu(labels, costs, affordable)
@@ -353,19 +410,17 @@ func _do_field_spell() -> void:
 
 	var spell := spells[pick]
 	var outcome: Dictionary = _session.cast_in_field(spell.id)
-	await _message.play("%s!" % spell.display_name)
+	await _message.play(Loc.t("MSG_SPELL_CAST", {"spell": Loc.spell_name(spell)}))
 	match int(outcome["result"]):
 		GameSession.FieldSpell.OK:
 			if spell.kind == "heal":
-				await _message.play("Thy wounds close. +%d HP" % outcome["amount"])
+				await _message.play(Loc.t("MSG_HEALED", {"amount": outcome["amount"]}))
 		GameSession.FieldSpell.NO_MP:
-			await _message.play("Thy magic is spent.")
+			await _message.play(Loc.t("MSG_NO_MP"))
 		GameSession.FieldSpell.NOT_HERE:
-			await _message.play("Nothing happens here.")
-		GameSession.FieldSpell.NO_EFFECT:
-			await _message.play("Nothing happens.")
+			await _message.play(Loc.t("MSG_NOT_HERE"))
 		_:
-			await _message.play("Nothing happens.")
+			await _message.play(Loc.t("MSG_NOTHING_HAPPENS"))
 	_refresh_status()
 
 
@@ -376,12 +431,12 @@ func _do_use_item() -> void:
 		if item != null and item.kind == "consumable":
 			usable.append(item)
 	if usable.is_empty():
-		await _message.play("Thou carriest nothing useful.")
+		await _message.play(Loc.t("MSG_NO_ITEMS"))
 		return
 
 	var labels: Array[String] = []
 	for item in usable:
-		labels.append(item.display_name)
+		labels.append(Loc.item_name(item))
 	var pick := await _submenu.open_menu(labels)
 	if pick < 0:
 		return
@@ -389,35 +444,36 @@ func _do_use_item() -> void:
 	var outcome: Dictionary = _session.use_item_in_field(usable[pick].id)
 	match String(outcome["effect"]):
 		"heal":
-			await _message.play("%s. +%d HP" % [usable[pick].display_name, outcome["amount"]])
+			await _message.play(Loc.t("MSG_ITEM_HEALED", {
+				"item": Loc.item_name(usable[pick]), "amount": outcome["amount"]}))
 		"light":
-			await _message.play("The torch flares. The dark draws back.")
+			await _message.play(Loc.t("MSG_TORCH"))
 			_refresh_sight()
 		_:
-			await _message.play("Nothing happens.")
+			await _message.play(Loc.t("MSG_NOTHING_HAPPENS"))
 	_refresh_status()
 
 
 func _do_take() -> void:
 	var result: Dictionary = _session.open_chest_here()
 	if not result["found"]:
-		await _message.play("There is nothing here.")
+		await _message.play(Loc.t("MSG_NOTHING_HERE"))
 		return
 	if result["empty"]:
-		await _message.play("The chest is empty.")
+		await _message.play(Loc.t("MSG_CHEST_EMPTY"))
 		return
 	if result["full"]:
-		await _message.play("Thou canst carry no more.")
+		await _message.play(Loc.t("MSG_BAG_FULL"))
 		return
 
 	# The lid is part of the tilemap, so an opened chest has to be repainted.
 	_field.set_cell_terrain(_session.world.cell, Terrain.Type.FLOOR)
 	_sfx("sfx_chest")
 	if int(result["gold"]) > 0:
-		await _message.play("%d gold!" % result["gold"])
+		await _message.play(Loc.t("MSG_FOUND_GOLD", {"gold": result["gold"]}))
 	if StringName(result["item"]) != &"":
 		var item := _session.db.item(result["item"])
-		await _message.play("Thou hast found a %s!" % item.display_name)
+		await _message.play(Loc.t("MSG_FOUND_ITEM", {"item": Loc.item_name(item)}))
 	_refresh_status()
 
 
@@ -429,20 +485,20 @@ func _do_equip() -> void:
 				or item.kind == "shield"):
 			gear.append(item)
 	if gear.is_empty():
-		await _message.play("Thou hast nothing to equip.")
+		await _message.play(Loc.t("MSG_NO_GEAR"))
 		return
 
 	var labels: Array[String] = []
 	var kinds: Array[String] = []
 	for item in gear:
-		labels.append(item.display_name)
-		kinds.append(item.kind.to_upper())
+		labels.append(Loc.item_name(item))
+		kinds.append(Loc.t("KIND_" + item.kind.to_upper()))
 	var pick := await _submenu.open_menu(labels, kinds)
 	if pick < 0:
 		return
 
 	if _session.equip(gear[pick].id) == TownServices.Result.OK:
-		await _message.play("Thou art now armed with the %s." % gear[pick].display_name)
+		await _message.play(Loc.t("MSG_EQUIPPED", {"item": Loc.item_name(gear[pick])}))
 	_refresh_status()
 
 
@@ -464,7 +520,7 @@ func _run_battle(monster_id: StringName) -> void:
 	await _encounter_transition()
 	_bgm("bgm_boss" if is_boss_fight else "bgm_battle")
 	_backdrop.set_terrain(_session.world.terrain_here())
-	_monster_name = data.display_name
+	_monster_name = Loc.monster_name(data)
 	_monster_max_hp = data.max_hp
 	_monster_hp = data.max_hp
 	_battle_name.text = _monster_name
@@ -502,7 +558,7 @@ func _run_battle(monster_id: StringName) -> void:
 		_bgm(_map_bgm())
 	if _session.hero.is_alive() \
 			and float(_session.hero.hp) / float(maxi(_session.hero.max_hp, 1)) < 0.25:
-		await _message.play("Thou art gravely wounded. Seek an inn.")
+		await _message.play(Loc.t("MSG_WOUNDED"))
 	_exit_busy()
 
 
@@ -510,7 +566,8 @@ func _run_battle(monster_id: StringName) -> void:
 ## asked again.
 func _ask_command() -> Array:
 	var pick := await _command.open_menu(
-			["FIGHT", "SPELL", "ITEM", "RUN"], [], [], false)
+			[Loc.t("MENU_FIGHT"), Loc.t("MENU_SPELL"),
+			Loc.t("MENU_ITEM"), Loc.t("MENU_RUN")], [], [], false)
 	match pick:
 		0:
 			return [BattleState.Command.ATTACK, &""]
@@ -529,15 +586,15 @@ func _ask_spell() -> Array:
 		if spell.usable_in_battle:
 			spells.append(spell)
 	if spells.is_empty():
-		await _message.play("You know no spells.")
+		await _message.play(Loc.t("MSG_NO_SPELLS_BATTLE"))
 		return []
 
 	var labels: Array[String] = []
 	var costs: Array[String] = []
 	var affordable: Array[bool] = []
 	for spell in spells:
-		labels.append(spell.display_name)
-		costs.append("%d MP" % spell.mp_cost)
+		labels.append(Loc.spell_name(spell))
+		costs.append(Loc.t("FMT_MP", {"mp": spell.mp_cost}))
 		affordable.append(_session.hero.mp >= spell.mp_cost)
 
 	var pick := await _submenu.open_menu(labels, costs, affordable)
@@ -553,7 +610,7 @@ func _ask_item() -> Array:
 		if item != null and item.kind == "consumable":
 			usable.append(item)
 	if usable.is_empty():
-		await _message.play("You carry nothing useful.")
+		await _message.play(Loc.t("MSG_NO_ITEMS_BATTLE"))
 		return []
 
 	var labels: Array[String] = []
@@ -574,11 +631,11 @@ func _play(events: Array[BattleEvent]) -> void:
 	while index < events.size():
 		var event := events[index]
 		_apply_effect(event)
-		var line := BattleText.describe(event, "You", _monster_name)
+		var line := BattleText.describe(event, _monster_name, _session.db)
 
 		if index + 1 < events.size() and _merges(event, events[index + 1]):
 			var follow := events[index + 1]
-			var tail := BattleText.describe(follow, "You", _monster_name)
+			var tail := BattleText.describe(follow, _monster_name, _session.db)
 			if line.length() + tail.length() <= 62:
 				_apply_effect(follow)
 				line = "%s  %s" % [line, tail]
@@ -603,8 +660,8 @@ func _merges(event: BattleEvent, next: BattleEvent) -> bool:
 func _stat_snapshot() -> Dictionary:
 	var hero := _session.hero
 	return {
-		"STRENGTH": hero.strength, "AGILITY": hero.agility,
-		"MAX HP": hero.max_hp, "MAX MP": hero.max_mp,
+		"STAT_STRENGTH": hero.strength, "STAT_AGILITY": hero.agility,
+		"STAT_MAX_HP": hero.max_hp, "STAT_MAX_MP": hero.max_mp,
 	}
 
 
@@ -623,7 +680,7 @@ func _report_level_gains(before: Dictionary, events: Array[BattleEvent]) -> void
 	for key in after:
 		var gain: int = int(after[key]) - int(before[key])
 		if gain > 0:
-			parts.append("%s +%d" % [key, gain])
+			parts.append(Loc.t("FMT_GAIN", {"stat": Loc.t(key), "amount": gain}))
 	if not parts.is_empty():
 		await _message.play("  ".join(parts))
 
@@ -708,7 +765,7 @@ func _adopt_current_monster() -> void:
 	if _session.battle == null or _session.battle.monster.monster == null:
 		return
 	var data := _session.battle.monster.monster
-	_monster_name = data.display_name
+	_monster_name = Loc.monster_name(data)
 	_monster_max_hp = data.max_hp
 	_monster_hp = _session.battle.monster.hp
 	_battle_name.text = _monster_name
@@ -727,19 +784,19 @@ func _play_victory() -> void:
 	_message.clear()
 	_bgm("bgm_town")
 	_sfx("sfx_victory")
-	await _message.play("The Dragonlord is no more.")
-	await _message.play("The Light returns to Alefgard.")
-	await _message.play("Thy quest is at an end.")
+	await _message.play(Loc.t("MSG_VICTORY_1"))
+	await _message.play(Loc.t("MSG_VICTORY_2"))
+	await _message.play(Loc.t("MSG_VICTORY_3"))
 	await _wait_for_key("")
 
 
 func _handle_death() -> void:
-	await _message.play("Thou art dead.")
+	await _message.play(Loc.t("MSG_DEAD"))
 	await _wait_for_key("")
 	var lost := _session.respawn()
 	_battle.visible = false
 	_message.clear()
-	await _message.play("You lose %d gold and wake at the castle." % lost)
+	await _message.play(Loc.t("MSG_RESPAWN", {"gold": lost}))
 	_refresh_status()
 
 
@@ -775,8 +832,11 @@ func _on_map_changed(map_id: StringName, cell: Vector2i) -> void:
 			_field.set_cell_terrain(chest.cell, Terrain.Type.FLOOR)
 	_field.snap_hero(cell)
 	_refresh_sight()
-	_place.text = map.display_name
-	_message.push("- %s -" % map.display_name)
+	var place := Loc.map_name(map)
+	_place.text = place
+	# A new map is a new context: the old map's chatter goes with it.
+	_message.clear()
+	_message.push(Loc.t("FMT_PLACE", {"place": place}))
 	if _booted:
 		_sfx("sfx_stairs")
 	_bgm(_map_bgm())
@@ -787,14 +847,14 @@ func _on_map_changed(map_id: StringName, cell: Vector2i) -> void:
 func _first_visit_hints(map: MapData) -> void:
 	if map.id == &"field" and not _session.has_flag(&"hint_field"):
 		_session.set_flag(&"hint_field")
-		_message.push("The cave lies east, beyond the swamp.")
+		_message.push(Loc.t("MSG_HINT_FIELD"))
 	elif map.is_dungeon and not _session.has_flag(&"hint_dungeon"):
 		_session.set_flag(&"hint_dungeon")
-		_message.push("It is dark. A torch would widen thy sight.")
+		_message.push(Loc.t("MSG_HINT_DUNGEON"))
 
 
 func _on_terrain_damaged(amount: int) -> void:
-	_message.push("The swamp burns! -%d HP" % amount)
+	_message.push(Loc.t("MSG_SWAMP", {"amount": amount}))
 
 
 func _refresh_status() -> void:
@@ -806,6 +866,6 @@ func _refresh_status() -> void:
 func _refresh_battle_hp() -> void:
 	if not _battle.visible:
 		return
-	_hp_text.text = "HP %d/%d" % [_monster_hp, _monster_max_hp]
+	_hp_text.text = Loc.t("FMT_HP", {"hp": _monster_hp, "max": _monster_max_hp})
 	var ratio := float(_monster_hp) / float(maxi(_monster_max_hp, 1))
 	_hp_fill.size.x = HP_BAR_WIDTH * clampf(ratio, 0.0, 1.0)

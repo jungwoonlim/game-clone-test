@@ -12,6 +12,8 @@ extends SceneTree
 const ART_DIR := "res://assets/art"
 const AUDIO_DIR := "res://assets/audio"
 const SCRIPT_DIRS := ["res://scenes", "res://view_2d"]
+const STRINGS_CSV := "res://assets/i18n/strings.csv"
+const LOCALES := ["en", "ko"]
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -43,7 +45,14 @@ func _run() -> void:
 	_test_message_window()
 	_test_text_speed()
 	_test_battle_backdrop()
+	_test_translation_table()
+	_test_every_key_is_referenced()
+	_test_names_are_translated()
+	_test_josa()
+	_test_font_covers_every_character()
 	await _test_overlapping_flows()
+	_test_message_window_forgets()
+	await _test_system_menu()
 
 	print("[presentation] %d checks, %d failures" % [_checks, _failures.size()])
 	for failure in _failures:
@@ -188,6 +197,252 @@ func _test_continue_from_save() -> void:
 
 	main.queue_free()
 	SaveGame.erase()
+
+
+## Walking away ends the conversation. Leaving the lines behind is what put
+## a shopkeeper's goodbye above a swamp message two maps later.
+func _test_message_window_forgets() -> void:
+	var window: MessageWindow = load("res://view_2d/ui/message_window.gd").new()
+	window.push("one")
+	window.push("two")
+	_check(window.visible_lines().size() == 2, "the window did not take the lines")
+	window.dismiss()
+	_check(window.visible_lines().is_empty(),
+			"dismissing left %d lines behind" % window.visible_lines().size())
+	_check(not window.visible, "an emptied message window is still on screen")
+	window.free()
+
+
+## There was no way to leave the game except closing the window. SYSTEM is
+## the last entry of the field menu and ESCAPE opens it directly.
+func _test_system_menu() -> void:
+	Boot.continue_from_save = false
+	var main: Node = load("res://scenes/main.tscn").instantiate()
+	root.add_child(main)
+	await process_frame
+	await process_frame
+
+	var command: CommandWindow = main.get("_command")
+	main.call("_open_field_menu")
+	await process_frame
+	var labels: Array = command.get("_labels")
+	_check(labels.size() == 7, "the field menu has %d entries" % labels.size())
+	_check(labels.size() == 7 and labels[6] == Loc.t("MENU_SYSTEM"),
+			"the last field menu entry is %s" % labels[-1])
+	command.chosen.emit(-1)
+	await process_frame
+
+	# ESCAPE reaches the same menu without going through the field menu.
+	main.call("_open_system_menu")
+	await process_frame
+	var submenu: CommandWindow = main.get("_submenu")
+	_check(submenu.is_open(), "ESCAPE did not open the system menu")
+	var options: Array = submenu.get("_labels")
+	_check(options.size() == 3, "the system menu has %d entries" % options.size())
+
+	# Leaving asks first, and starts on the answer that keeps the game.
+	submenu.chosen.emit(1)
+	await process_frame
+	var message: MessageWindow = main.get("_message")
+	var guard := 0
+	while not submenu.is_open() and guard < 4000:
+		guard += 1
+		if message.is_typing():
+			message.request_skip()
+		await process_frame
+	_check(guard < 4000, "the title confirmation never asked")
+	if submenu.is_open():
+		_check(int(submenu.get("_index")) == 0,
+				"the confirmation starts on the answer that leaves")
+		_check(submenu.get("_labels")[0] == Loc.t("MENU_NO"),
+				"the confirmation's first answer is %s" % submenu.get("_labels")[0])
+		submenu.chosen.emit(0)
+	await process_frame
+
+	main.queue_free()
+	await process_frame
+
+
+# --- 번역 -----------------------------------------------------------------
+
+## The one thing a translation table must never do is show the player a key.
+## Every row has to exist in every language, and the two languages have to
+## agree on which placeholders the sentence takes — a {gold} that survives
+## into Korean as {money} prints the braces to the screen.
+func _test_translation_table() -> void:
+	var table := _string_table()
+	_check(table.size() > 150, "the string table has only %d rows" % table.size())
+
+	var placeholder := RegEx.new()
+	placeholder.compile("\\{([a-z_]+)\\}")
+
+	for key in table:
+		var slots := {}
+		for locale in LOCALES:
+			var text: String = table[key][locale]
+			_check(text != "", "%s has no %s text" % [key, locale])
+			var found := []
+			for match in placeholder.search_all(text):
+				found.append(match.get_string(1))
+			found.sort()
+			slots[locale] = found
+		_check(slots["en"] == slots["ko"],
+				"%s takes %s in English but %s in Korean"
+				% [key, slots["en"], slots["ko"]])
+
+
+## The other direction: a key spelled wrong in the code is silent until a
+## player walks into that line. This resolves every literal in the view
+## against the table, the way the sound sweep does for sfx names.
+func _test_every_key_is_referenced() -> void:
+	var table := _string_table()
+	var pattern := RegEx.new()
+	pattern.compile("\"([A-Z][A-Z0-9_]{3,})\"")
+
+	var referenced := {}
+	for dir_path in SCRIPT_DIRS:
+		for path in _scripts_in(dir_path):
+			var text := FileAccess.get_file_as_string(path)
+			for match in pattern.search_all(text):
+				var key := match.get_string(1)
+				# Only strings that look like table keys; enum names and
+				# node paths share the shape but never the prefix.
+				if _is_key_like(key):
+					referenced[key] = path
+
+	_check(referenced.size() > 60,
+			"only %d translation keys found; the sweep is not working"
+			% referenced.size())
+	for key in referenced:
+		_check(_resolves(table, key),
+				"%s uses missing translation key \"%s\"" % [referenced[key], key])
+
+	# The two keys that code assembles rather than writes out: the equipment
+	# kind comes off the item data, so all three have to be there.
+	for kind in ["WEAPON", "ARMOR", "SHIELD"]:
+		_check(table.has("KIND_" + kind), "KIND_%s is missing" % kind)
+
+
+## A key is present if it is in the table, or if it is the base of a
+## second-person/third-person pair that BattleText picks between.
+func _resolves(table: Dictionary, key: String) -> bool:
+	if table.has(key):
+		return true
+	return table.has(key + "_YOU") and table.has(key + "_IT")
+
+
+## Data names come from the id, so a new monster with no row in the table
+## would fall back to its English display_name and never be translated.
+func _test_names_are_translated() -> void:
+	var table := _string_table()
+	var groups := {
+		"ITEM_": _db.items, "MONSTER_": _db.monsters,
+		"SPELL_": _db.spells, "MAP_": _db.maps,
+	}
+	for prefix in groups:
+		for entry in groups[prefix]:
+			var key: String = prefix + String(entry.id).to_upper()
+			_check(table.has(key), "%s has no name row (%s)" % [entry.id, key])
+
+	# NPC dialogue is stored as keys too, so the same hole exists there.
+	for map in _db.maps:
+		for npc in map.npcs:
+			for entry in npc.dialogue:
+				for line in entry.lines:
+					_check(table.has(String(line)),
+							"%s says missing line \"%s\"" % [npc.id, line])
+
+
+## Korean postpositions are chosen from the word in front of them, so the
+## marker has to survive formatting and then disappear. A `#` on screen is
+## the failure this catches.
+func _test_josa() -> void:
+	TranslationServer.set_locale("ko")
+	var cases := [
+		["MSG_FOUND_ITEM", {"item": Loc.t("ITEM_HERB")}, "약초를"],
+		["MSG_FOUND_ITEM", {"item": Loc.t("ITEM_W_SWORD")}, "강철검을"],
+		["BT_BATTLE_START", {"monster": Loc.t("MONSTER_M_SLIME")}, "슬라임이"],
+		["BT_BATTLE_START", {"monster": Loc.t("MONSTER_M_GHOST")}, "고스트가"],
+	]
+	for case in cases:
+		var text := Loc.t(case[0], case[1])
+		_check(text.contains(case[2]),
+				"%s read \"%s\", expected to contain \"%s\"" % [case[0], text, case[2]])
+
+	# Nothing in either language may leak a marker.
+	for locale in LOCALES:
+		TranslationServer.set_locale(locale)
+		for key in _string_table():
+			_check(not Loc.t(key).contains(Loc.JOSA_MARK),
+					"%s leaves a josa marker in %s" % [key, locale])
+	TranslationServer.set_locale("en")
+
+
+## Noto Sans KR's Korean subset has no geometric shapes, so ▶ ■ □ were being
+## drawn by whatever CJK font the player's machine happened to have. They
+## looked right here and would have been empty boxes on a clean install. Every
+## character the game can put on screen has to be in the font we ship.
+func _test_font_covers_every_character() -> void:
+	var theme: Theme = load("res://assets/theme/dq_theme.tres")
+	_check(theme != null and theme.default_font != null, "the project theme has no font")
+	if theme == null or theme.default_font == null:
+		return
+	var font := theme.default_font
+
+	var missing := {}
+	for key in _string_table():
+		for locale in LOCALES:
+			var text: String = _string_table()[key][locale]
+			for i in text.length():
+				var code := text.unicode_at(i)
+				if not font.has_char(code):
+					missing["%s U+%04X" % [text[i], code]] = key
+	for entry in missing:
+		_check(false, "the font has no glyph for %s (%s)" % [entry, missing[entry]])
+	_check(missing.is_empty(), "%d characters have no glyph" % missing.size())
+
+	# The numbers and units the windows print without going through the table.
+	for character in "0123456789/+-. HPMG":
+		_check(font.has_char(character.unicode_at(0)),
+				"the font has no glyph for %s" % character)
+
+
+## A key is a table key when it is one of the prefixes the table uses. This
+## keeps the sweep from tripping over enum names and Godot constants.
+func _is_key_like(key: String) -> bool:
+	# A bare prefix is the front half of a key the code builds from an id.
+	if key.ends_with("_"):
+		return false
+	for prefix in ["MENU_", "MSG_", "BT_", "STAT_", "SET_", "TITLE_", "SYS_",
+			"FMT_", "QUEST_", "KIND_", "ITEM_", "MONSTER_", "SPELL_", "MAP_",
+			"NPC_"]:
+		if key.begins_with(prefix):
+			return true
+	return false
+
+
+var _table_cache := {}
+
+## { key: { "en": text, "ko": text } }, read from the CSV the importer reads.
+func _string_table() -> Dictionary:
+	if not _table_cache.is_empty():
+		return _table_cache
+	var file := FileAccess.open(STRINGS_CSV, FileAccess.READ)
+	if file == null:
+		return _table_cache
+	var header := file.get_csv_line()
+	var columns := {}
+	for i in header.size():
+		columns[header[i]] = i
+	while not file.eof_reached():
+		var row := file.get_csv_line()
+		if row.size() < header.size() or row[0] == "":
+			continue
+		var entry := {}
+		for locale in LOCALES:
+			entry[locale] = row[columns[locale]]
+		_table_cache[row[0]] = entry
+	return _table_cache
 
 
 func _check(condition: bool, message: String) -> void:
@@ -378,7 +633,8 @@ func _test_title_screen() -> void:
 	var labels: Array = menu.get("_labels")
 	var enabled: Array = menu.get("_enabled")
 	_check(labels.size() == 4, "title menu has %d entries" % labels.size())
-	_check(labels[0] == "CONTINUE", "the first title entry is %s" % labels[0])
+	_check(labels[0] == Loc.t("TITLE_CONTINUE"),
+			"the first title entry is %s" % labels[0])
 	_check(enabled.size() > 0 and not enabled[0],
 			"CONTINUE is selectable with no save file")
 

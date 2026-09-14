@@ -16,6 +16,15 @@ config/icon="res://icon.svg"
 AudioDirector="*res://view_2d/audio/audio_director.gd"
 GameSettings="*res://view_2d/settings.gd"
 
+[gui]
+
+theme/custom="res://assets/theme/dq_theme.tres"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/i18n/strings.en.translation", "res://assets/i18n/strings.ko.translation")
+locale/fallback="en"
+
 [display]
 
 window/size/viewport_width=512

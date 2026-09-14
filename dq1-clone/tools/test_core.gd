@@ -57,29 +57,43 @@ func _initialize() -> void:
 
 
 func _test_battle_text() -> void:
-	var monster_cast := BattleEvent.new(BattleEvent.Kind.SPELL_CAST, false, 0, "Hurt")
-	var line := BattleText.describe(monster_cast, "You", "Magician")
+	TranslationServer.set_locale("en")
+	var monster_cast := BattleEvent.new(BattleEvent.Kind.SPELL_CAST, false, 0, &"hurt")
+	var line := BattleText.describe(monster_cast, "Magician", _db)
 	_check(line == "Magician casts Hurt!", "monster spell line reads: %s" % line)
 
-	var hero_cast := BattleEvent.new(BattleEvent.Kind.SPELL_CAST, true, 0, "Hurt")
-	_check(BattleText.describe(hero_cast, "You", "Magician") == "You cast Hurt!",
-			"hero spell line reads: %s" % BattleText.describe(hero_cast, "You", "Magician"))
+	var hero_cast := BattleEvent.new(BattleEvent.Kind.SPELL_CAST, true, 0, &"hurt")
+	line = BattleText.describe(hero_cast, "Magician", _db)
+	_check(line == "You cast Hurt!", "hero spell line reads: %s" % line)
 
 	# Damage names the target, which is the side that did NOT act.
 	var hero_hits := BattleEvent.new(BattleEvent.Kind.DAMAGE, true, 4)
-	_check(BattleText.describe(hero_hits, "You", "Magician") == "Magician takes 4 damage.",
-			"hero damage line reads: %s" % BattleText.describe(hero_hits, "You", "Magician"))
+	line = BattleText.describe(hero_hits, "Magician", _db)
+	_check(line == "Magician takes 4 damage.", "hero damage line reads: %s" % line)
 	var monster_hits := BattleEvent.new(BattleEvent.Kind.DAMAGE, false, 11)
-	_check(BattleText.describe(monster_hits, "You", "Magician") == "You take 11 damage.",
-			"monster damage line reads: %s" % BattleText.describe(monster_hits, "You", "Magician"))
+	line = BattleText.describe(monster_hits, "Magician", _db)
+	_check(line == "You take 11 damage.", "monster damage line reads: %s" % line)
 
-	# Every event kind must produce something; a silent kind is a dropped message.
-	var silent: Array[String] = []
-	for kind in BattleEvent.Kind.values():
-		var event := BattleEvent.new(kind, true, 1, "Thing")
-		if BattleText.describe(event, "You", "Slime") == "":
-			silent.append(BattleEvent.Kind.keys()[kind])
-	_check(silent.is_empty(), "no text for event kinds: %s" % [silent])
+	# The same two events in Korean. The point is not the wording but that the
+	# view produced it from the same event with nothing changed in core.
+	TranslationServer.set_locale("ko")
+	line = BattleText.describe(monster_cast, Loc.t("MONSTER_M_MAGICIAN"), _db)
+	_check(line == "마법사는 기라를 외웠다!", "Korean monster spell line reads: %s" % line)
+	line = BattleText.describe(hero_hits, Loc.t("MONSTER_M_MAGICIAN"), _db)
+	_check(line == "마법사에게 4의 피해.", "Korean damage line reads: %s" % line)
+
+	# Every event kind must produce something in every language; a silent kind
+	# is a dropped message, and an untranslated one shows the player a key.
+	for locale in ["en", "ko"]:
+		TranslationServer.set_locale(locale)
+		var broken: Array[String] = []
+		for kind in BattleEvent.Kind.values():
+			var event := BattleEvent.new(kind, true, 1, &"herb")
+			var text := BattleText.describe(event, "Slime", _db)
+			if text == "" or text.begins_with("BT_"):
+				broken.append(BattleEvent.Kind.keys()[kind])
+		_check(broken.is_empty(), "no %s text for event kinds: %s" % [locale, broken])
+	TranslationServer.set_locale("en")
 
 
 # --- M4: 마을 -------------------------------------------------------------
@@ -115,7 +129,7 @@ func _test_dialogue_flags() -> void:
 	var first := session.talk_to(king)
 	_check(first != null, "the King said nothing")
 	_check(session.has_flag(&"heard_quest"), "talking to the King set no flag")
-	_check(first.lines[0].begins_with("Descendant"),
+	_check(first.lines[0] == &"NPC_KING_1A",
 			"first King line reads: %s" % first.lines[0])
 
 	var second := session.talk_to(king)
@@ -124,11 +138,11 @@ func _test_dialogue_flags() -> void:
 	# The villager's line flips on the same flag.
 	var villager := _db.map(&"town").npc_at(Vector2i(13, 11))
 	var after := session.talk_to(villager)
-	_check(after.lines[0].begins_with("Thy path"),
+	_check(after.lines[0] == &"NPC_VILLAGER_A1",
 			"villager did not react to the quest flag: %s" % after.lines[0])
 	var fresh := _new_session()
 	var before := fresh.talk_to(villager)
-	_check(before.lines[0].begins_with("The King"),
+	_check(before.lines[0] == &"NPC_VILLAGER_A2",
 			"villager pre-quest line reads: %s" % before.lines[0])
 
 

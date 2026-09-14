@@ -3,6 +3,8 @@
 class_name BattleActor
 extends RefCounted
 
+## The data id this actor was built from — what battle events name.
+var id: StringName = &""
 var display_name: String = ""
 var is_hero: bool = false
 
@@ -37,6 +39,7 @@ var spell_sealed: bool = false
 
 static func from_monster(data: MonsterData) -> BattleActor:
 	var a := BattleActor.new()
+	a.id = data.id
 	a.display_name = data.display_name
 	a.is_hero = false
 	a.max_hp = data.max_hp

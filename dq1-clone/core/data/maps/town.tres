@@ -10,14 +10,14 @@
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &"heard_quest"
-lines = PackedStringArray("Descendant of Erdrick, listen now.", "The Dragonlord has stolen the Light.", "Go forth, and thy deeds shall be recorded.")
+lines = PackedStringArray("NPC_KING_1A", "NPC_KING_1B", "NPC_KING_1C")
 set_flag = &"heard_quest"
 
 [sub_resource type="Resource" id="Resource_sovvx"]
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("Rest, and thy progress shall be recorded.", "Return when the Dragonlord has fallen.")
+lines = PackedStringArray("NPC_KING_2A", "NPC_KING_2B")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_pibri"]
@@ -33,7 +33,7 @@ inn_price = 0
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("We deal in arms. What will thou have?")
+lines = PackedStringArray("NPC_SHOP_WEAPON")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_wtag4"]
@@ -49,7 +49,7 @@ inn_price = 0
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("Armour keeps a traveller breathing.")
+lines = PackedStringArray("NPC_SHOP_ARMOR")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_x01jn"]
@@ -65,7 +65,7 @@ inn_price = 0
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("Herbs and torches. Thou wilt want both.")
+lines = PackedStringArray("NPC_SHOP_ITEM")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_pa7qc"]
@@ -81,7 +81,7 @@ inn_price = 0
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("Welcome. A night\'s rest restores all.")
+lines = PackedStringArray("NPC_INN")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_fhw0c"]
@@ -97,14 +97,14 @@ inn_price = 6
 script = ExtResource("3_w152k")
 required_flag = &"heard_quest"
 forbidden_flag = &""
-lines = PackedStringArray("Thy path is set. The cave lies east, past the swamp.")
+lines = PackedStringArray("NPC_VILLAGER_A1")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_t3d5l"]
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("The King has been waiting for thee. Speak with him.")
+lines = PackedStringArray("NPC_VILLAGER_A2")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_1tygy"]
@@ -120,7 +120,7 @@ inn_price = 0
 script = ExtResource("3_w152k")
 required_flag = &""
 forbidden_flag = &""
-lines = PackedStringArray("None who enter the cave unarmed return.", "Buy a weapon before thou goest.")
+lines = PackedStringArray("NPC_VILLAGER_B1", "NPC_VILLAGER_B2")
 set_flag = &""
 
 [sub_resource type="Resource" id="Resource_hupaf"]

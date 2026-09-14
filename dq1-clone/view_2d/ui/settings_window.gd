@@ -5,9 +5,10 @@ extends DQWindow
 
 signal closed()
 
-enum Row { MUSIC, SOUND, TEXT, VIEW, SCREEN, BACK }
+enum Row { MUSIC, SOUND, TEXT, LANG, VIEW, SCREEN, BACK }
 
-const ROWS := ["MUSIC", "SOUND", "TEXT", "VIEW", "SCREEN", "BACK"]
+const ROWS := ["SET_MUSIC", "SET_SOUND", "SET_TEXT", "SET_LANG", "SET_VIEW",
+		"SET_SCREEN", "SET_BACK"]
 const BAR_SEGMENTS := 10
 const STEP := 0.1
 
@@ -22,7 +23,7 @@ func _ready() -> void:
 
 func open_settings() -> void:
 	_index = 0
-	size = Vector2(170, PAD.y * 2.0 + LINE_HEIGHT * ROWS.size())
+	size = Vector2(196, PAD.y * 2.0 + LINE_HEIGHT * ROWS.size())
 	show()
 	queue_redraw()
 	_open = true
@@ -84,6 +85,9 @@ func _adjust(direction: int) -> void:
 		Row.TEXT:
 			settings.cycle_text_speed(direction)
 			sfx("sfx_cursor")
+		Row.LANG:
+			settings.cycle_language(direction)
+			sfx("sfx_confirm")
 		Row.VIEW:
 			settings.cycle_view_mode(direction)
 			sfx("sfx_confirm")
@@ -97,8 +101,8 @@ func _draw() -> void:
 	var settings := get_node_or_null("/root/GameSettings") if is_inside_tree() else null
 	for i in ROWS.size():
 		if i == _index:
-			draw_text(i, CommandWindow.CURSOR)
-		draw_text(i, ROWS[i], BORDER, 12.0)
+			draw_cursor(i)
+		draw_text(i, Loc.t(ROWS[i]), BORDER, CommandWindow.TEXT_INDENT)
 		if settings == null:
 			continue
 		match i:
@@ -108,15 +112,26 @@ func _draw() -> void:
 				_draw_bar(i, settings.sfx_volume)
 			Row.TEXT:
 				draw_text_right(i, settings.text_speed_name())
+			Row.LANG:
+				draw_text_right(i, settings.language_name())
 			Row.VIEW:
 				draw_text_right(i, settings.view_name())
 			Row.SCREEN:
-				draw_text_right(i, "FULL" if settings.fullscreen else "WINDOW")
+				draw_text_right(i, Loc.t("SET_FULL" if settings.fullscreen else "SET_WINDOW"))
 
 
+## Ten boxes, filled up to the current level. Drawn rather than typed, for
+## the same reason as the cursor.
 func _draw_bar(row: int, value: float) -> void:
 	var filled := int(round(value * BAR_SEGMENTS))
-	var text := ""
+	var box := Vector2(8.0, 8.0)
+	var gap := 2.0
+	var width := BAR_SEGMENTS * box.x + (BAR_SEGMENTS - 1) * gap
+	var left := size.x - PAD.x - width
+	var top := PAD.y + LINE_HEIGHT * (row + 0.5) - box.y * 0.5
 	for i in BAR_SEGMENTS:
-		text += "■" if i < filled else "□"
-	draw_text_right(row, text)
+		var at := Rect2(Vector2(left + i * (box.x + gap), top), box)
+		if i < filled:
+			draw_rect(at, BORDER)
+		else:
+			draw_rect(at.grow(-0.5), BORDER, false, 1.0)
