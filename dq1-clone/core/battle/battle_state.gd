@@ -217,12 +217,23 @@ func _do_spell(caster: BattleActor, target: BattleActor, spell_id: StringName,
 			events.append(BattleEvent.new(BattleEvent.Kind.SPELL_UNAVAILABLE, caster.is_hero))
 
 
+## ITEM_USED is what tells the session to take the item out of the bag, so a
+## use that would heal nothing has to report ITEM_UNAVAILABLE instead — the
+## turn is still spent, but the herb survives for when it is worth something.
 func _do_item(item_id: StringName, events: Array[BattleEvent]) -> void:
 	var item := _db.item(item_id)
 	if item == null or item.kind != "consumable" or item.effect_id != &"heal_hp":
 		events.append(BattleEvent.new(BattleEvent.Kind.ITEM_UNAVAILABLE, true))
 		return
+	if not hero.carries_item(item_id):
+		events.append(BattleEvent.new(BattleEvent.Kind.ITEM_UNAVAILABLE, true))
+		return
+	if hero.hp >= hero.max_hp:
+		events.append(BattleEvent.new(BattleEvent.Kind.ITEM_NO_EFFECT, true, 0,
+				item.display_name))
+		return
 	var healed := hero.restore_hp(item.effect_power)
+	hero.consume_item(item_id)
 	events.append(BattleEvent.new(BattleEvent.Kind.ITEM_USED, true, healed, item.display_name))
 
 

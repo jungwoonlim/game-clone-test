@@ -71,11 +71,17 @@ static func rest(hero: Hero, price: int) -> Result:
 
 
 ## Consumables used outside battle. Returns HP restored, or -1 if unusable.
+##
+## A herb at full HP is unusable, not a no-op: healing nothing and swallowing
+## the herb anyway is the one outcome the player never intends. Field Heal
+## already refuses the same way rather than spending the MP.
 static func use_item(hero: Hero, db: GameDatabase, item_id: StringName) -> int:
 	var item := db.item(item_id)
 	if item == null or item.kind != "consumable" or item.effect_id != &"heal_hp":
 		return -1
 	if not hero.has_item(item_id):
+		return -1
+	if hero.hp >= hero.max_hp:
 		return -1
 	var healed := mini(item.effect_power, hero.max_hp - hero.hp)
 	hero.hp += healed

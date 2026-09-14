@@ -153,6 +153,7 @@ func to_battle_actor(db: GameDatabase) -> BattleActor:
 	actor.resist_sleep = 0
 	actor.resist_stopspell = 128
 	actor.known_spells = db.spells_up_to_level(level)
+	actor.carried_items = inventory.duplicate()
 	return actor
 
 

@@ -51,6 +51,9 @@ static func describe(event: BattleEvent, hero_name: String, monster_name: String
 				actor, _verb(actor_is_hero, "use", "uses"), event.label, event.amount]
 		BattleEvent.Kind.ITEM_UNAVAILABLE:
 			return "Nothing to use."
+		BattleEvent.Kind.ITEM_NO_EFFECT:
+			return "%s %s %s, but nothing happens." % [
+				actor, _verb(actor_is_hero, "hold up", "holds up"), event.label]
 		BattleEvent.Kind.FLEE_SUCCESS:
 			return "%s %s!" % [actor, _verb(actor_is_hero, "flee", "flees")]
 		BattleEvent.Kind.FLEE_BLOCKED:

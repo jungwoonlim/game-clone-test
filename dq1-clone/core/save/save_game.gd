@@ -61,6 +61,9 @@ static func load_into(hero: Hero, db: GameDatabase) -> Dictionary:
 	hero.total_exp = int(config.get_value("hero", "total_exp", 0))
 	hero.apply_level(db.level_curve, db.level_curve.level_for_exp(hero.total_exp), true)
 	hero.gold = int(config.get_value("hero", "gold", 0))
+	# At least 1: a save can only be written by a living party (see
+	# GameSession.save_game), so a zero here means the file was damaged and
+	# waking up dead would leave the player stuck.
 	hero.hp = clampi(int(config.get_value("hero", "hp", hero.max_hp)), 1, hero.max_hp)
 	hero.mp = clampi(int(config.get_value("hero", "mp", hero.max_mp)), 0, hero.max_mp)
 	hero.weapon_id = StringName(config.get_value("hero", "weapon", ""))

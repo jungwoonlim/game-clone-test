@@ -26,6 +26,9 @@ var can_flee_from: bool = true
 var monster: MonsterData = null
 ## Set for the hero; empty for monsters.
 var known_spells: Array[SpellData] = []
+## Snapshot of the hero's bag, so the battle can tell a herb it actually has
+## from one it was merely asked to use. Kept in step as items are spent.
+var carried_items: Array[StringName] = []
 
 var asleep: bool = false
 var sleep_guaranteed_left: int = 0
@@ -74,6 +77,19 @@ func restore_hp(amount: int) -> int:
 	var healed := clampi(amount, 0, max_hp - hp)
 	hp += healed
 	return healed
+
+
+func carries_item(id: StringName) -> bool:
+	return carried_items.has(id)
+
+
+## Takes one off the snapshot. False when there was none to take.
+func consume_item(id: StringName) -> bool:
+	var index := carried_items.find(id)
+	if index < 0:
+		return false
+	carried_items.remove_at(index)
+	return true
 
 
 func knows_spell(id: StringName) -> bool:

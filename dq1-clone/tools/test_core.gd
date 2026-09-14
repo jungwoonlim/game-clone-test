@@ -46,6 +46,9 @@ func _initialize() -> void:
 	_test_dungeon_sight()
 	_test_boss_trigger()
 	_test_boss_transformation()
+	_test_consumables_are_not_wasted()
+	_test_outside_leaves_the_dungeon()
+	_test_light_sources_do_not_dim_each_other()
 
 	print("[test] %d checks, %d failures" % [_checks, _failures.size()])
 	for failure in _failures:
@@ -392,6 +395,94 @@ func _test_boss_transformation() -> void:
 			"the second form transforms again")
 	_check(second.is_boss and not second.can_flee_from and not second.can_be_critical,
 			"the second form does not inherit the boss rules")
+
+
+# --- 낭비 방지 ------------------------------------------------------------
+
+## Heal refuses to cast at full HP without spending MP. A herb has to behave
+## the same way — a consumable that vanishes for nothing is worse than a
+## refused action, because you cannot get it back.
+func _test_consumables_are_not_wasted() -> void:
+	var session := _new_session()
+	session.hero.apply_level(_db.level_curve, 10, true)
+	session.hero.add_item(&"herb")
+
+	var outcome: Dictionary = session.use_item_in_field(&"herb")
+	_check(String(outcome["effect"]) == "none",
+			"a herb used at full HP reported: %s" % outcome)
+	_check(session.hero.has_item(&"herb"), "a herb used at full HP was consumed")
+
+	# Wounded, it should work normally.
+	session.hero.hp = 1
+	outcome = session.use_item_in_field(&"herb")
+	_check(String(outcome["effect"]) == "heal", "a herb did not heal a wounded hero")
+	_check(int(outcome["amount"]) > 0, "the herb healed nothing")
+	_check(not session.hero.has_item(&"herb"), "a herb that healed was not consumed")
+
+	# Same rule inside a battle.
+	var battle_session := _new_session(21)
+	battle_session.hero.apply_level(_db.level_curve, 10, true)
+	battle_session.hero.add_item(&"herb")
+	battle_session.begin_battle(&"m_slime")
+	var events := battle_session.battle_command(BattleState.Command.ITEM, &"herb")
+	var used := false
+	for event in events:
+		if event.kind == BattleEvent.Kind.ITEM_USED:
+			used = true
+	_check(not used, "a herb was used at full HP in battle")
+	_check(battle_session.hero.has_item(&"herb"),
+			"a herb used at full HP in battle was consumed")
+
+	# ...and an item that is not in the bag heals nobody. BattleState has no
+	# bag of its own, so without a carried list it would happily heal from a
+	# herb the party does not own and the session's remove_item would quietly
+	# fail — unlimited free healing for anyone who can name an item id.
+	var empty_handed := _new_session(22)
+	empty_handed.hero.apply_level(_db.level_curve, 10, true)
+	empty_handed.hero.hp = 1
+	empty_handed.begin_battle(&"m_slime")
+	var before_hp := empty_handed.hero.hp
+	var phantom := empty_handed.battle_command(BattleState.Command.ITEM, &"herb")
+	var phantom_used := false
+	for event in phantom:
+		if event.kind == BattleEvent.Kind.ITEM_USED:
+			phantom_used = true
+	_check(not phantom_used, "an unowned herb was used in battle")
+	_check(empty_handed.hero.hp <= before_hp,
+			"an unowned herb healed the hero (%d -> %d HP)"
+			% [before_hp, empty_handed.hero.hp])
+
+
+## Outside is the spell that gets you out of a dungeon. Landing on the floor
+## above is not out.
+func _test_outside_leaves_the_dungeon() -> void:
+	var session := _new_session()
+	session.hero.apply_level(_db.level_curve, 14, true)
+	session.world.enter_map(&"dungeon_b2", Vector2i(5, 5))
+	var result: Dictionary = session.cast_in_field(&"outside")
+	_check(int(result["result"]) == GameSession.FieldSpell.OK, "Outside failed on B2")
+	_check(not session.world.map.is_dungeon,
+			"Outside from B2 landed on %s, still underground" % session.world.map.id)
+
+
+## A torch and Radiant must not cancel each other out.
+func _test_light_sources_do_not_dim_each_other() -> void:
+	var session := _new_session()
+	session.hero.apply_level(_db.level_curve, 14, true)
+	session.world.enter_map(&"dungeon", Vector2i(5, 5))
+	session.hero.add_item(&"torch")
+
+	session.use_item_in_field(&"torch")
+	var torch_radius := session.world.sight_radius()
+	var torch_steps := session.world.light_steps
+
+	session.cast_in_field(&"radiant")
+	_check(session.world.sight_radius() >= torch_radius,
+			"Radiant narrowed the torch's light (%d -> %d)"
+			% [torch_radius, session.world.sight_radius()])
+	_check(session.world.light_steps >= torch_steps,
+			"Radiant shortened the torch (%d -> %d steps)"
+			% [torch_steps, session.world.light_steps])
 
 
 func _check(condition: bool, message: String) -> void:

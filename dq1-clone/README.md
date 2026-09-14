@@ -108,9 +108,9 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 1,553 checks
+# 상시 검증 — 합계 1,534 checks (플레이스루 32건 별도)
 $G --headless --path . --script res://tools/validate_data.gd      # 649
-$G --headless --path . --script res://tools/test_core.gd          # 223
+$G --headless --path . --script res://tools/test_core.gd          # 236
 $G --headless --path . --script res://tools/test_architecture.gd  # 400
 $G --headless --path . --script res://tools/test_presentation.gd  # 249
 
@@ -118,9 +118,17 @@ $G --headless --path . --script res://tools/test_presentation.gd  # 249
 $G --headless --path . --script res://tools/smoke_view.gd                                  # 16
 $G --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn     # 16
 
+# 퍼징 — 무작위 행동 16만 번에 대해 불변식 230만 건 (약 9초)
+$G --headless --path . --script res://tools/fuzz_core.gd -- 400 400
+
 # 밸런스 리포트 → docs/07-BALANCE_REPORT.md
 $G --headless --path . --script res://tools/simulate_balance.gd
 ```
+
+`fuzz_core.gd`는 **불변식**을 검사합니다 — HP/MP/골드 범위, 레벨과 누적 경험치의 일치,
+장착 슬롯의 종류, 파티가 서 있는 칸의 통행 가능 여부, 그리고 거래·부활·상자의 보존 법칙.
+실패하면 **시드와 스텝 번호**를 찍어 그대로 재현할 수 있습니다. 무엇을 잡았는지는
+[docs/10-BUGHUNT.md](docs/10-BUGHUNT.md).
 
 `smoke_view.gd`는 **실제 씬을 띄워 프레임 단위로 플레이합니다** — 곤봉을 사고, 장비하고,
 여관에서 자고, 왕에게 세이브하고, 마을을 나가 전투를 치르고, 던전에서 상자를 열고,
@@ -154,6 +162,7 @@ $G --headless --path . --script res://tools/simulate_balance.gd
 | [07-BALANCE_REPORT.md](docs/07-BALANCE_REPORT.md) | 밸런스 리포트 (자동 생성) |
 | [08-ASSETS.md](docs/08-ASSETS.md) | 에셋 생성 파이프라인과 교체 방법 |
 | [09-2_5D.md](docs/09-2_5D.md) | 2.5D 리메이크 — 무엇을 바꿨고 무엇을 안 바꿨나 |
+| [10-BUGHUNT.md](docs/10-BUGHUNT.md) | 퍼징과 정독으로 잡은 버그 5개 |
 
 ## 주의
 

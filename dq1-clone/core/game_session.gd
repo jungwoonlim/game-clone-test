@@ -180,7 +180,7 @@ func use_item_in_field(item_id: StringName) -> Dictionary:
 		if not world.map.is_dungeon:
 			return {"effect": "none", "amount": 0}
 		world.light_bonus = maxi(world.light_bonus, item.effect_power)
-		world.light_steps = TORCH_DURATION
+		world.light_steps = maxi(world.light_steps, TORCH_DURATION)
 		hero.remove_item(item_id)
 		return {"effect": "light", "amount": TORCH_DURATION}
 
@@ -247,15 +247,20 @@ func cast_in_field(spell_id: StringName) -> Dictionary:
 		&"radiant":
 			if not world.map.is_dungeon:
 				return {"result": FieldSpell.NOT_HERE, "amount": 0}
-			world.light_bonus = RADIANT_RADIUS
-			world.light_steps = RADIANT_DURATION
+			# Light sources stack as the widest radius for the longest time
+			# left. Assigning outright let Radiant cut a burning torch from
+			# 120 steps down to 80 — a spell that made the cave darker.
+			world.light_bonus = maxi(world.light_bonus, RADIANT_RADIUS)
+			world.light_steps = maxi(world.light_steps, RADIANT_DURATION)
 			amount = RADIANT_DURATION
 		&"return":
 			world.enter_map(db.start_map)
 		&"outside":
-			if not world.map.is_dungeon or world.map.warps.is_empty():
+			if not world.map.is_dungeon:
 				return {"result": FieldSpell.NOT_HERE, "amount": 0}
-			var exit: WarpPoint = world.map.warps[0]
+			var exit := _surface_exit()
+			if exit == null:
+				return {"result": FieldSpell.NOT_HERE, "amount": 0}
 			world.enter_map(exit.to_map, exit.to_cell)
 		_:
 			return {"result": FieldSpell.NO_EFFECT, "amount": 0}
@@ -264,9 +269,36 @@ func cast_in_field(spell_id: StringName) -> Dictionary:
 	return {"result": FieldSpell.OK, "amount": amount}
 
 
+## The warp that puts the party back on the surface, or null if this cave has
+## no way out. Taking the first warp on the current floor is not the same
+## thing: B2's only stairs lead to B1, which is still underground, and Outside
+## is the spell for leaving the dungeon rather than climbing one floor of it.
+## Breadth-first, so the party surfaces by the shortest route it could walk.
+func _surface_exit() -> WarpPoint:
+	var seen := {world.map.id: true}
+	var queue: Array[MapData] = [world.map]
+	while not queue.is_empty():
+		var floor_map: MapData = queue.pop_front()
+		for warp in floor_map.warps:
+			var target := db.map(warp.to_map)
+			if target == null or seen.has(target.id):
+				continue
+			if not target.is_dungeon:
+				return warp
+			seen[target.id] = true
+			queue.append(target)
+	return null
+
+
 # --- 세이브 ---------------------------------------------------------------
 
+## Refuses to record a dead party. The loader clamps HP to at least 1 as a
+## guard against a corrupt file, which would mean a save taken at 0 HP came
+## back as 1 — a save that silently changes the thing it saved. Blocking it
+## here keeps load a faithful inverse of save for every file the game writes.
 func save_game() -> Error:
+	if not hero.is_alive():
+		return ERR_UNAVAILABLE
 	return SaveGame.save(hero, flags, world.map.id, world.cell, world.steps)
 
 
