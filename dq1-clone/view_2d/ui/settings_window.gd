@@ -5,9 +5,9 @@ extends DQWindow
 
 signal closed()
 
-enum Row { MUSIC, SOUND, TEXT, SCREEN, BACK }
+enum Row { MUSIC, SOUND, TEXT, VIEW, SCREEN, BACK }
 
-const ROWS := ["MUSIC", "SOUND", "TEXT", "SCREEN", "BACK"]
+const ROWS := ["MUSIC", "SOUND", "TEXT", "VIEW", "SCREEN", "BACK"]
 const BAR_SEGMENTS := 10
 const STEP := 0.1
 
@@ -84,6 +84,9 @@ func _adjust(direction: int) -> void:
 		Row.TEXT:
 			settings.cycle_text_speed(direction)
 			sfx("sfx_cursor")
+		Row.VIEW:
+			settings.cycle_view_mode(direction)
+			sfx("sfx_confirm")
 		Row.SCREEN:
 			settings.set_fullscreen(not settings.fullscreen)
 			sfx("sfx_confirm")
@@ -105,6 +108,8 @@ func _draw() -> void:
 				_draw_bar(i, settings.sfx_volume)
 			Row.TEXT:
 				draw_text_right(i, settings.text_speed_name())
+			Row.VIEW:
+				draw_text_right(i, settings.view_name())
 			Row.SCREEN:
 				draw_text_right(i, "FULL" if settings.fullscreen else "WINDOW")
 

@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://view_3d/field/field_view_3d.gd" id="2_field3d"]
+[ext_resource type="Shader" path="res://view_3d/post/tilt_shift.gdshader" id="3_tilt"]
+[ext_resource type="PackedScene" path="res://view_2d/ui/game_ui.tscn" id="4_ui"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tilt"]
+shader = ExtResource("3_tilt")
+
+[node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="FieldView" type="Node3D" parent="."]
+script = ExtResource("2_field3d")
+
+[node name="World" type="WorldEnvironment" parent="FieldView"]
+
+[node name="Sun" type="DirectionalLight3D" parent="FieldView"]
+transform = Transform3D(0.86, 0.35, -0.37, 0, 0.73, 0.68, 0.51, -0.59, 0.63, 0, 12, 0)
+light_energy = 0.85
+light_color = Color(1, 0.96, 0.87, 1)
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="FieldView"]
+
+[node name="Props" type="Node3D" parent="FieldView"]
+
+[node name="Actors" type="Node3D" parent="FieldView"]
+
+[node name="Hero" type="Sprite3D" parent="FieldView/Actors"]
+
+[node name="Lantern" type="OmniLight3D" parent="FieldView/Actors/Hero"]
+visible = false
+position = Vector3(0, 0.9, 0)
+light_color = Color(1, 0.88, 0.66, 1)
+light_energy = 3.4
+omni_range = 6.0
+
+[node name="CameraRig" type="Node3D" parent="FieldView"]
+
+[node name="Camera" type="Camera3D" parent="FieldView/CameraRig"]
+
+[node name="Post" type="CanvasLayer" parent="."]
+
+[node name="TiltShift" type="ColorRect" parent="Post"]
+material = SubResource("ShaderMaterial_tilt")
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="UI" parent="." instance=ExtResource("4_ui")]
+layer = 1

@@ -2,9 +2,10 @@
 
 초대 드래곤 퀘스트(1986, NES)의 **시스템 클론**. 2D로 먼저 만들고, 이후 2.5D 리메이크로 이어집니다.
 
-> **현재 상태: M0~M6 완료.** 타이틀에서 시작해 마을에서 장비를 사고, 여관에서 자고,
+> **현재 상태: M0~M7 완료.** 타이틀에서 시작해 마을에서 장비를 사고, 여관에서 자고,
 > 왕에게 세이브하고, 필드에서 레벨을 올려 던전 2층의 마왕을 쓰러뜨리는 것까지
-> **사운드와 음악이 붙은 채로** 처음부터 끝까지 플레이됩니다.
+> 사운드와 음악이 붙은 채로 플레이되며, **설정에서 2D / 2.5D 렌더러를 골라** 같은
+> 게임을 양쪽으로 즐길 수 있습니다.
 
 | 타이틀 | 설정 |
 | --- | --- |
@@ -15,6 +16,12 @@
 | ![dungeon](docs/screenshot-dungeon.png) | ![battle](docs/screenshot-battle.png) |
 | **보스 2페이즈** | **피격 연출** |
 | ![boss](docs/screenshot-boss.png) | ![damage](docs/screenshot-damage.png) |
+
+### 2.5D (M7) — 같은 게임, 렌더러만 교체
+
+| 마을 | 필드 | 던전 |
+| --- | --- | --- |
+| ![3d town](docs/screenshot-3d-town.png) | ![3d field](docs/screenshot-3d-field.png) | ![3d dungeon](docs/screenshot-3d-dungeon.png) |
 
 ## 실행
 
@@ -28,6 +35,7 @@
 | 메뉴 열기 / 확인 | Space, Enter, Z |
 | 취소 | Esc, X |
 | 설정 값 조절 | ← → |
+| 렌더러 전환 | 설정 → VIEW (2D / 2.5D) |
 | 메시지 넘기기 | 아무 키 |
 
 필드 메뉴: `TALK` `TAKE` `STATUS` `SPELL` `ITEM` `EQUIP` · 전투 메뉴: `FIGHT` `SPELL` `ITEM` `RUN`
@@ -54,7 +62,7 @@
 | **온보딩 — 퀘스트 안내, 첫 방문 힌트** | ✅ M6 |
 | **지형별 전투 배경, 인카운터 플래시, 데미지 숫자** | ✅ |
 | **레벨업 스탯 상승 표시, 메시지 속도 설정** | ✅ |
-| 2.5D 리메이크 | ❌ M7 |
+| **2.5D 렌더러 — 3D 지형 + 빌보드 스프라이트, 틸트시프트** | ✅ M7 |
 
 ## 에셋은 전부 생성됩니다
 
@@ -77,7 +85,10 @@
 > 1. **`core/`는 `view_2d/`를 절대 참조하지 않는다.** 통신은 시그널로 단방향.
 > 2. **`core/`에는 `Node2D`/`Node3D`/`Control`이 없다.** 순수 GDScript 클래스와 `Resource`만.
 
-M3(전투 화면)은 이 규칙의 실전 검증이었습니다 — **`core/` 변경 0줄**로 완료했습니다.
+M3(전투 화면)과 M7(2.5D 리메이크) 둘 다 **`core/` 변경 0줄**로 끝났습니다.
+2.5D는 컨트롤러도 그대로 씁니다 — `main.gd`가 필드 뷰에 대해 아는 건 메서드 7개뿐이라,
+같은 메서드를 가진 3D 뷰로 노드만 갈아끼우면 됩니다. `tools/test_architecture.gd`가
+이 대응을 자동으로 검사합니다.
 
 `core/`가 한 턴을 즉시 해결해 **이벤트 목록**으로 돌려주고, 뷰가 그걸 타자기 속도로
 재생합니다. 애니메이션을 기다리지 않으므로 같은 전투를 0초에 1000번 돌릴 수 있습니다.
@@ -97,11 +108,15 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 1,137 checks
+# 상시 검증 — 합계 1,553 checks
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 223
+$G --headless --path . --script res://tools/test_architecture.gd  # 400
 $G --headless --path . --script res://tools/test_presentation.gd  # 249
-$G --headless --path . --script res://tools/smoke_view.gd         #  16
+
+# 전체 플레이스루를 두 렌더러 모두에 대해
+$G --headless --path . --script res://tools/smoke_view.gd                                  # 16
+$G --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn     # 16
 
 # 밸런스 리포트 → docs/07-BALANCE_REPORT.md
 $G --headless --path . --script res://tools/simulate_balance.gd
@@ -138,6 +153,7 @@ $G --headless --path . --script res://tools/simulate_balance.gd
 | [06-VERIFICATION.md](docs/06-VERIFICATION.md) | 원작 수치 검증 기록 |
 | [07-BALANCE_REPORT.md](docs/07-BALANCE_REPORT.md) | 밸런스 리포트 (자동 생성) |
 | [08-ASSETS.md](docs/08-ASSETS.md) | 에셋 생성 파이프라인과 교체 방법 |
+| [09-2_5D.md](docs/09-2_5D.md) | 2.5D 리메이크 — 무엇을 바꿨고 무엇을 안 바꿨나 |
 
 ## 주의
 

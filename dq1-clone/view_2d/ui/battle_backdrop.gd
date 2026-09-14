@@ -40,9 +40,13 @@ func _draw() -> void:
 	var horizon := size.y * 0.55
 	# Sky, banded so it gradates without a gradient texture.
 	var bands := 12
+	var band_height := horizon / float(bands)
 	for i in bands:
+		# Step by the band height, not by t: stepping by horizon*t leaves a
+		# hairline gap between bands. Invisible over the 2D field, and a row of
+		# bright streaks over the 3D one.
 		var t := float(i) / float(bands - 1)
-		draw_rect(Rect2(0, horizon * t, size.x, horizon / bands + 1.0),
+		draw_rect(Rect2(0, i * band_height, size.x, band_height + 1.0),
 				_sky.lightened(0.08 * t))
 	draw_rect(Rect2(0, horizon, size.x, size.y - horizon), _ground)
 	draw_rect(Rect2(0, horizon - 2.0, size.x, 3.0), _accent)

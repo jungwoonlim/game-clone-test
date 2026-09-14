@@ -1,6 +1,11 @@
 ## Boots the real main scene and plays it the way a person would.
 ##
 ##   godot --headless --path . --script res://tools/smoke_view.gd
+##   godot --headless --path . --script res://tools/smoke_view.gd -- res://scenes/main_3d.tscn
+##
+## The scene is an argument on purpose: the same playthrough has to pass
+## against the 2D and the 2.5D renderer, which is what "the view is
+## swappable" actually means.
 ##
 ## The UI is asynchronous — it awaits menu choices and typewriter timers — so
 ## this drives it frame by frame rather than calling into it. That is the only
@@ -11,6 +16,7 @@ enum Phase { BOOT, SHOP, EQUIP, INN, KING, LEAVE_TOWN, FIND_FIGHT, FIGHT,
 	DUNGEON, BOSS, DONE }
 
 const FRAME_BUDGET := 60000
+const DEFAULT_SCENE := "res://scenes/main.tscn"
 
 var _main: Node = null
 var _phase := Phase.BOOT
@@ -34,8 +40,17 @@ func _initialize() -> void:
 	# Message timers are real-time; run the clock fast.
 	Engine.time_scale = 8.0
 	SaveGame.erase()
-	_main = load("res://scenes/main.tscn").instantiate()
+	var scene_path := _scene_path()
+	print("[smoke-view] scene: %s" % scene_path)
+	_main = load(scene_path).instantiate()
 	root.add_child(_main)
+
+
+func _scene_path() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("res://"):
+			return argument
+	return DEFAULT_SCENE
 
 
 func _process(_delta: float) -> bool:

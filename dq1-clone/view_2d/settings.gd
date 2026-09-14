@@ -15,6 +15,12 @@ var fullscreen: bool = false
 ## the NES and it is the cheapest accessibility win available.
 var text_speed: int = 1
 
+## 0 = the 2D renderer, 1 = the 2.5D one. The same controller and the same UI
+## drive both; this only decides which scene the title screen opens.
+var view_mode: int = 0
+
+const VIEW_NAMES := ["2D", "2.5D"]
+const VIEW_SCENES := ["res://scenes/main.tscn", "res://scenes/main_3d.tscn"]
 const TEXT_SPEED_NAMES := ["SLOW", "NORMAL", "FAST"]
 const TEXT_SPEED_CPS := [45.0, 90.0, 200.0]
 
@@ -30,6 +36,7 @@ func load_settings() -> void:
 		sfx_volume = clampf(float(config.get_value("audio", "sfx", 0.8)), 0.0, 1.0)
 		fullscreen = bool(config.get_value("video", "fullscreen", false))
 		text_speed = clampi(int(config.get_value("text", "speed", 1)), 0, 2)
+		view_mode = clampi(int(config.get_value("video", "view_mode", 0)), 0, 1)
 	apply()
 
 
@@ -39,6 +46,7 @@ func save_settings() -> void:
 	config.set_value("audio", "sfx", sfx_volume)
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("text", "speed", text_speed)
+	config.set_value("video", "view_mode", view_mode)
 	config.save(PATH)
 
 
@@ -62,6 +70,20 @@ func set_music_volume(value: float) -> void:
 
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = clampf(value, 0.0, 1.0)
+	apply()
+	save_settings()
+
+
+func view_name() -> String:
+	return VIEW_NAMES[clampi(view_mode, 0, 1)]
+
+
+func view_scene() -> String:
+	return VIEW_SCENES[clampi(view_mode, 0, 1)]
+
+
+func cycle_view_mode(direction: int) -> void:
+	view_mode = wrapi(view_mode + direction, 0, VIEW_NAMES.size())
 	apply()
 	save_settings()
 

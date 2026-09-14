@@ -9,10 +9,11 @@ const STAR_SEED := 7731
 
 func _draw() -> void:
 	var bands := 24
+	var band_height := size.y / float(bands)
 	for i in bands:
 		var t := float(i) / float(bands - 1)
-		draw_rect(Rect2(0, size.y * t / 1.0 * 0.0 + i * size.y / bands,
-				size.x, size.y / bands + 1.0), TOP.lerp(BOTTOM, t))
+		draw_rect(Rect2(0, i * band_height, size.x, band_height + 1.0),
+				TOP.lerp(BOTTOM, t))
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = STAR_SEED

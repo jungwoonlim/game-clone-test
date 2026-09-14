@@ -2,7 +2,11 @@
 ##
 ## core resolves a turn instantly; everything here is about performing that
 ## result at a pace a person can read.
-extends Node2D
+##
+## Deliberately `extends Node` and holds the field view as a plain `Node`: the
+## same script drives scenes/main.tscn (2D) and scenes/main_3d.tscn (2.5D),
+## because both field views expose the same handful of methods.
+extends Node
 
 const DIRECTIONS := {
 	"ui_left": Vector2i.LEFT,
@@ -12,7 +16,7 @@ const DIRECTIONS := {
 }
 const HP_BAR_WIDTH := 120.0
 
-@onready var _field: Node2D = $FieldView
+@onready var _field: Node = $FieldView
 @onready var _status: StatusWindow = $UI/Status
 @onready var _place: Label = $UI/Place
 @onready var _message: MessageWindow = $UI/Message

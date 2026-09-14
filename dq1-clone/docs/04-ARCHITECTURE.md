@@ -33,17 +33,24 @@ dq1-clone/
 │   ├── town/services.gd       구입·판매·장비·여관·도구
 │   └── save/save_game.gd      ConfigFile 직렬화 (core 상태만)
 │
-├── view_2d/                   ← 나중에 view_3d/ 로 교체되는 층
+├── view_2d/                   ← 2D 렌더러 (+ 두 렌더러가 공유하는 UI)
 │   ├── boot.gd                타이틀 → 게임 인계 (static var)
 │   ├── settings.gd            [autoload] 볼륨·창모드 영속화
 │   ├── audio/audio_director.gd [autoload] 버스 생성, SFX 풀, BGM
 │   ├── field/                 field_view / hero / npc_layer / darkness / 타일셋
 │   └── ui/                    dq_window 기반 창 키트 + battle_text
-│                               battle_backdrop / floating_number 등 연출
+│                               game_ui.tscn ← 두 씬이 인스턴스하는 UI 한 벌
+│
+├── view_3d/                   ← 2.5D 렌더러 (M7)
+│   ├── field/field_view_3d.gd 같은 메서드 surface, 다른 매체
+│   ├── field/terrain_3d.gd    지형별 높이·프롭 프로필
+│   └── post/tilt_shift.gdshader
 │
 ├── scenes/
-│   ├── title.tscn / title.gd  타이틀 · 설정
-│   └── main.tscn / main.gd    core와 view를 조립하는 유일한 지점
+│   ├── title.tscn / title.gd  타이틀 · 설정 (VIEW에서 렌더러 선택)
+│   ├── main.tscn              2D 필드 + 공유 UI
+│   ├── main_3d.tscn           2.5D 필드 + 공유 UI
+│   └── main.gd                ★ 두 씬이 공유하는 단 하나의 컨트롤러
 │
 └── tools/                     전부 헤드리스
     ├── build_tiles.gd         지형 아틀라스 생성
@@ -52,9 +59,10 @@ dq1-clone/
     ├── build_data.gd          .tres 데이터 + TileSet 시딩
     ├── validate_data.gd       데이터 정합성 (649 checks)
     ├── test_core.gd           core 동작 (223 checks)
+    ├── test_architecture.gd   core/view 규칙 검사 (400 checks)
     ├── test_presentation.gd   에셋·설정·타이틀·연출 (249 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
-    └── smoke_view.gd          전체 플레이스루 (16 checks)
+    └── smoke_view.gd          전체 플레이스루 (16 checks, 씬을 인자로 받음)
 ```
 
 ## 화면의 소유권
@@ -142,6 +150,21 @@ Lv17까지 필요한 걸음 수:   평균 약 5,400보
 ### 3. 진행 가능성 검사
 
 데드락 탐지 — 특정 레벨에서 골드가 부족해 장비를 못 사고, 장비가 없어 레벨을 못 올리는 구간이 생기는지. RPG 밸런싱에서 실제로 자주 나는 사고입니다.
+
+## 렌더러 교체 (M7에서 실제로 함)
+
+`main.gd`가 필드 뷰에 대해 아는 것은 **메서드 7개뿐**입니다.
+
+```
+render_map · snap_hero · walk_hero · face_hero · is_walking · set_sight · set_cell_terrain
+```
+
+`view_3d/field/field_view_3d.gd`가 같은 이름으로 같은 일을 하므로, `main_3d.tscn`은
+`main.tscn`에서 FieldView 서브트리만 바꾼 것이고 **컨트롤러와 UI는 같은 파일**입니다.
+`tools/test_architecture.gd`가 컨트롤러의 `_field.xxx(` 호출을 긁어 양쪽 뷰에 다 있는지
+검사하고, `smoke_view.gd`는 **같은 플레이스루를 두 씬 모두에 대해** 돌립니다.
+
+자세한 건 `09-2_5D.md`.
 
 ## 2.5D 전환 대비
 

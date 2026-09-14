@@ -10,6 +10,11 @@ extends SceneTree
 
 const TILE := 16
 const OUT_PATH := "res://view_2d/field/terrain_tiles.png"
+## Upright versions of the tiles that become billboards in the 2.5D view.
+## Same motifs, transparent background — a standing billboard must not carry
+## its own patch of ground with it.
+const PROPS_PATH := "res://view_2d/field/terrain_props.png"
+const PROPS := ["tree", "house", "cave", "door", "chest"]
 const SEED := 611
 
 ## base, dark, light, accent — order matches Terrain.Type.
@@ -43,8 +48,61 @@ func _initialize() -> void:
 
 	DirAccess.make_dir_recursive_absolute(OUT_PATH.get_base_dir())
 	var err := _image.save_png(OUT_PATH)
-	print("[tiles] %d tiles -> %s (err=%d)" % [TILES.size(), OUT_PATH, err])
-	quit(0 if err == OK else 1)
+
+	_image = Image.create(TILE * PROPS.size(), TILE, false, Image.FORMAT_RGBA8)
+	for index in PROPS.size():
+		_draw_prop(index * TILE, PROPS[index])
+	var prop_err := _image.save_png(PROPS_PATH)
+
+	print("[tiles] %d tiles, %d props (err=%d/%d)" % [
+		TILES.size(), PROPS.size(), err, prop_err])
+	quit(0 if err == OK and prop_err == OK else 1)
+
+
+## Drawn standing up, so these read from the side rather than from above.
+func _draw_prop(ox: int, name: String) -> void:
+	match name:
+		"tree":
+			_rect(ox, 7, 10, 8, 15, Color("5a3a1e"))
+			_disc(ox, 8.0, 6.0, 5.0, Color("1c4a20"))
+			_disc(ox, 8.0, 6.0, 4.0, Color("2f6b32"))
+			_disc(ox, 6.0, 4.5, 2.0, Color("418f44"))
+			_disc(ox, 5.0, 9.0, 2.6, Color("2f6b32"))
+			_disc(ox, 11.0, 9.0, 2.6, Color("2f6b32"))
+		"house":
+			_rect(ox, 2, 7, 13, 15, Color("d8c9a4"))
+			_rect(ox, 2, 7, 2, 15, Color("ab9868"))
+			_rect(ox, 13, 7, 13, 15, Color("ab9868"))
+			for y in range(2, 8):
+				_rect(ox, y - 2, y, 17 - y, y, Color("b04a3a"))
+			_rect(ox, 0, 7, 15, 7, Color("7e2f24"))
+			_rect(ox, 6, 10, 9, 15, Color("5e3c18"))
+			_px(ox, 9, 13, Color("e8c84a"))
+			_rect(ox, 3, 9, 4, 10, Color("2a5fa8"))
+			_rect(ox, 11, 9, 12, 10, Color("2a5fa8"))
+		"cave":
+			_disc(ox, 8.0, 10.0, 7.0, Color("55555f"))
+			_disc(ox, 8.0, 10.0, 6.0, Color("3a3a44"))
+			_rect(ox, 2, 10, 13, 15, Color("3a3a44"))
+			_disc(ox, 8.0, 11.0, 4.2, Color("0b0b10"))
+			_rect(ox, 4, 11, 11, 15, Color("0b0b10"))
+		"door":
+			_rect(ox, 3, 2, 12, 15, Color("5e3c18"))
+			_rect(ox, 4, 3, 11, 15, Color("8a5a2a"))
+			for x in [6, 9]:
+				_rect(ox, x, 4, x, 15, Color("ab7640"))
+			_disc(ox, 10.0, 9.0, 1.4, Color("e8c84a"))
+		"chest":
+			_rect(ox, 2, 6, 13, 14, Color("a8761f"))
+			_rect(ox, 2, 6, 13, 9, Color("c9913a"))
+			_rect(ox, 2, 6, 13, 6, Color("5e3c18"))
+			_rect(ox, 2, 10, 13, 10, Color("5e3c18"))
+			_rect(ox, 2, 14, 13, 14, Color("5e3c18"))
+			_rect(ox, 2, 6, 2, 14, Color("5e3c18"))
+			_rect(ox, 13, 6, 13, 14, Color("5e3c18"))
+			_rect(ox, 7, 10, 8, 13, Color("5e3c18"))
+			_px(ox, 7, 11, Color("f0e08a"))
+			_px(ox, 8, 11, Color("f0e08a"))
 
 
 # --- 유틸 -----------------------------------------------------------------

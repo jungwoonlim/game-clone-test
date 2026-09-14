@@ -39,6 +39,11 @@ func _run_menu() -> void:
 				return
 
 
+## Which scene opens is a setting, not a build: the 2D and 2.5D views share the
+## controller and the UI, so switching is a scene path.
 func _begin(from_save: bool) -> void:
 	Boot.continue_from_save = from_save
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	var settings := get_node_or_null("/root/GameSettings")
+	var scene: String = settings.view_scene() if settings != null \
+			else "res://scenes/main.tscn"
+	get_tree().change_scene_to_file(scene)
