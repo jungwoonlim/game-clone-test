@@ -40,11 +40,123 @@ func _run() -> void:
 	_test_settings_round_trip()
 	await _test_title_screen()
 	await _test_continue_from_save()
+	_test_message_window()
+	_test_text_speed()
+	_test_battle_backdrop()
+	await _test_overlapping_flows()
 
 	print("[presentation] %d checks, %d failures" % [_checks, _failures.size()])
 	for failure in _failures:
 		printerr("  FAIL  %s" % failure)
 	quit(1 if _failures.size() > 0 else 0)
+
+
+## The window must never draw two lines on the same row. A full log plus a
+## line being typed is exactly the case that used to overlap.
+func _test_message_window() -> void:
+	var window: MessageWindow = load("res://view_2d/ui/message_window.gd").new()
+	for i in MessageWindow.MAX_LINES + 3:
+		window.push("line %d" % i)
+	_check(window.visible_lines().size() == MessageWindow.MAX_LINES,
+			"a full log shows %d rows, expected %d"
+			% [window.visible_lines().size(), MessageWindow.MAX_LINES])
+
+	window.set("_partial", "typing...")
+	var shown := window.visible_lines()
+	_check(shown.size() == MessageWindow.MAX_LINES,
+			"log plus a typing line shows %d rows, expected %d"
+			% [shown.size(), MessageWindow.MAX_LINES])
+	_check(shown[shown.size() - 1] == "typing...",
+			"the line being typed is not on the last row")
+	_check(not shown.slice(0, shown.size() - 1).has("typing..."),
+			"the typing line is duplicated among the committed lines")
+
+	window.clear()
+	_check(window.visible_lines().is_empty(), "clear left rows behind")
+	window.free()
+
+
+## The intro, a menu, a battle and a death all run as concurrent coroutines.
+## Each used to return control with `_mode = FIELD`, so whichever finished
+## first unlocked the field while the others were still running — two field
+## menus ended up open at once. Control must come back only when the last
+## flow is done.
+func _test_overlapping_flows() -> void:
+	Boot.continue_from_save = false
+	var main: Node = load("res://scenes/main.tscn").instantiate()
+	root.add_child(main)
+	await process_frame
+	await process_frame
+
+	_check(bool(main.call("is_busy")), "the opening lines did not take control")
+
+	# Open a menu on top of the intro, then close it.
+	main.call("_open_field_menu")
+	await process_frame
+	var command: CommandWindow = main.get("_command")
+	_check(command.is_open(), "the field menu did not open over the intro")
+	command.chosen.emit(-1)
+	await process_frame
+	await process_frame
+	_check(bool(main.call("is_busy")),
+			"closing the menu unlocked the field while the intro was still running")
+
+	# Let everything drain; the field should come back exactly once.
+	var message: MessageWindow = main.get("_message")
+	var guard := 0
+	while bool(main.call("is_busy")) and guard < 4000:
+		guard += 1
+		if message.is_typing():
+			message.request_skip()
+		main.set("_awaiting_key", false)
+		await process_frame
+	_check(guard < 4000, "the field never came back")
+	_check(not bool(main.call("is_busy")), "still busy after everything finished")
+
+	main.queue_free()
+	await process_frame
+
+
+func _test_text_speed() -> void:
+	var settings := root.get_node_or_null("GameSettings")
+	if settings == null:
+		return
+	var original: int = settings.text_speed
+	var seen := {}
+	for i in 3:
+		settings.text_speed = i
+		seen[settings.text_speed_name()] = settings.chars_per_second()
+	_check(seen.size() == 3, "text speeds are not distinct: %s" % [seen])
+	_check(float(seen["FAST"]) > float(seen["SLOW"]),
+			"FAST is not faster than SLOW")
+
+	settings.cycle_text_speed(1)
+	settings.save_settings()
+	var cycled: int = settings.text_speed
+	settings.load_settings()
+	_check(settings.text_speed == cycled, "text speed did not persist")
+	settings.text_speed = original
+	settings.save_settings()
+
+
+## Every terrain must produce a backdrop; a missing branch draws nothing and
+## the battle window ends up floating on a blank rectangle.
+func _test_battle_backdrop() -> void:
+	var backdrop: Control = load("res://view_2d/ui/battle_backdrop.gd").new()
+	backdrop.size = Vector2(512, 384)
+	var grounds := {}
+	for terrain in Terrain.Type.values():
+		backdrop.set_terrain(terrain)
+		grounds[terrain] = backdrop.get("_ground")
+		_check(backdrop.get("_ground") != null, "%s has no backdrop ground"
+				% Terrain.type_name(terrain))
+	var distinct := {}
+	for value in grounds.values():
+		distinct[str(value)] = true
+	_check(distinct.size() >= 4,
+			"only %d distinct backdrops across %d terrain types"
+			% [distinct.size(), grounds.size()])
+	backdrop.free()
 
 
 ## CONTINUE has to actually resume: the title only sets a flag, and main is

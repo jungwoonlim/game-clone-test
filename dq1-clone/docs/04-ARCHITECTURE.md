@@ -39,6 +39,7 @@ dq1-clone/
 │   ├── audio/audio_director.gd [autoload] 버스 생성, SFX 풀, BGM
 │   ├── field/                 field_view / hero / npc_layer / darkness / 타일셋
 │   └── ui/                    dq_window 기반 창 키트 + battle_text
+│                               battle_backdrop / floating_number 등 연출
 │
 ├── scenes/
 │   ├── title.tscn / title.gd  타이틀 · 설정
@@ -51,10 +52,27 @@ dq1-clone/
     ├── build_data.gd          .tres 데이터 + TileSet 시딩
     ├── validate_data.gd       데이터 정합성 (649 checks)
     ├── test_core.gd           core 동작 (223 checks)
-    ├── test_presentation.gd   에셋·설정·타이틀 (220 checks)
+    ├── test_presentation.gd   에셋·설정·타이틀·연출 (249 checks)
     ├── simulate_balance.gd    밸런스 리포트 생성
     └── smoke_view.gd          전체 플레이스루 (16 checks)
 ```
+
+## 화면의 소유권
+
+뷰에는 **동시에 도는 코루틴이 여럿** 있습니다 — 오프닝 문구, 메뉴, 전투, 사망 처리.
+각자가 끝날 때 `_mode = FIELD`로 제어권을 돌려주면, **먼저 끝난 쪽이 아직 돌고 있는
+쪽의 제어권까지 풀어버립니다.** 실제로 필드 메뉴가 두 개 동시에 열렸습니다.
+
+그래서 `main.gd`는 플래그가 아니라 **깊이 카운터**를 씁니다.
+
+```gdscript
+func is_busy() -> bool:
+	return _busy_depth > 0
+```
+
+흐름마다 `_enter_busy()` / `_exit_busy()`로 감싸고, **마지막 하나가 끝나야** 조작이
+돌아옵니다. `tools/test_presentation.gd`가 이 불변식을 고정합니다 — 오프닝 위에
+메뉴를 열었다 닫아도 오프닝이 끝날 때까지는 조작이 돌아오면 안 됩니다.
 
 ## 신호 흐름
 

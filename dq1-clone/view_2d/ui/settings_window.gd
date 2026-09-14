@@ -5,7 +5,9 @@ extends DQWindow
 
 signal closed()
 
-const ROWS := ["MUSIC", "SOUND", "SCREEN", "BACK"]
+enum Row { MUSIC, SOUND, TEXT, SCREEN, BACK }
+
+const ROWS := ["MUSIC", "SOUND", "TEXT", "SCREEN", "BACK"]
 const BAR_SEGMENTS := 10
 const STEP := 0.1
 
@@ -52,7 +54,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_RIGHT, KEY_D:
 			_adjust(1)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_Z:
-			if _index == ROWS.size() - 1:
+			if _index == Row.BACK:
 				sfx("sfx_confirm")
 				closed.emit()
 			else:
@@ -74,12 +76,15 @@ func _adjust(direction: int) -> void:
 	if settings == null:
 		return
 	match _index:
-		0:
+		Row.MUSIC:
 			settings.set_music_volume(settings.music_volume + direction * STEP)
-		1:
+		Row.SOUND:
 			settings.set_sfx_volume(settings.sfx_volume + direction * STEP)
 			sfx("sfx_cursor")
-		2:
+		Row.TEXT:
+			settings.cycle_text_speed(direction)
+			sfx("sfx_cursor")
+		Row.SCREEN:
 			settings.set_fullscreen(not settings.fullscreen)
 			sfx("sfx_confirm")
 
@@ -94,11 +99,13 @@ func _draw() -> void:
 		if settings == null:
 			continue
 		match i:
-			0:
+			Row.MUSIC:
 				_draw_bar(i, settings.music_volume)
-			1:
+			Row.SOUND:
 				_draw_bar(i, settings.sfx_volume)
-			2:
+			Row.TEXT:
+				draw_text_right(i, settings.text_speed_name())
+			Row.SCREEN:
 				draw_text_right(i, "FULL" if settings.fullscreen else "WINDOW")
 
 

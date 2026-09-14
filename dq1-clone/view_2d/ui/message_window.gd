@@ -7,6 +7,7 @@ class_name MessageWindow
 extends DQWindow
 
 const MAX_LINES := 4
+## Fallback when the settings autoload is absent (tool runs).
 const CHARS_PER_SECOND := 90.0
 const LINE_PAUSE := 0.22
 
@@ -56,13 +57,14 @@ func play(text: String) -> void:
 	_skip = false
 	_partial = ""
 	show()
+	var speed := _chars_per_second()
 	var elapsed := 0.0
 	while _partial.length() < text.length():
 		await get_tree().process_frame
 		if _skip:
 			break
 		elapsed += get_process_delta_time()
-		var count := mini(text.length(), int(elapsed * CHARS_PER_SECOND))
+		var count := mini(text.length(), int(elapsed * speed))
 		if count != _partial.length():
 			# One blip every few glyphs; per-character would be a buzz.
 			if count / 3 != _partial.length() / 3:
@@ -78,6 +80,11 @@ func play(text: String) -> void:
 	await _pause(LINE_PAUSE if not _skip else 0.05)
 
 
+func _chars_per_second() -> float:
+	var settings := get_node_or_null("/root/GameSettings") if is_inside_tree() else null
+	return settings.chars_per_second() if settings != null else CHARS_PER_SECOND
+
+
 func _pause(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 
@@ -87,14 +94,25 @@ func _trim() -> void:
 		_lines.pop_front()
 
 
+## What is on screen right now, oldest first.
+##
+## A line being typed takes the last row, so once the window is full the
+## committed lines have to scroll up to make room — otherwise the new line is
+## drawn straight on top of the last old one.
+func visible_lines() -> Array[String]:
+	if _partial == "":
+		return _lines.duplicate()
+	var kept := _lines
+	if kept.size() >= MAX_LINES:
+		kept = kept.slice(kept.size() - (MAX_LINES - 1))
+	var shown := kept.duplicate()
+	shown.append(_partial)
+	return shown
+
+
 func _draw() -> void:
 	super()
 	var index := 0
-	for line in _lines:
+	for line in visible_lines():
 		draw_text(index, line)
 		index += 1
-	if _partial != "":
-		if index >= MAX_LINES:
-			# Scroll while typing so the in-progress line is always visible.
-			index = MAX_LINES - 1
-		draw_text(index, _partial)

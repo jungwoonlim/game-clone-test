@@ -11,8 +11,10 @@
 | ![title](docs/screenshot-title.png) | ![settings](docs/screenshot-settings.png) |
 | **마을** | **필드** |
 | ![town](docs/screenshot-town.png) | ![field](docs/screenshot-field.png) |
-| **던전 (시야 제한)** | **보스 2페이즈** |
-| ![dungeon](docs/screenshot-dungeon.png) | ![boss](docs/screenshot-boss.png) |
+| **던전 (시야 제한)** | **전투 — 지형 배경 · 데미지 표시** |
+| ![dungeon](docs/screenshot-dungeon.png) | ![battle](docs/screenshot-battle.png) |
+| **보스 2페이즈** | **피격 연출** |
+| ![boss](docs/screenshot-boss.png) | ![damage](docs/screenshot-damage.png) |
 
 ## 실행
 
@@ -50,6 +52,8 @@
 | **효과음 19종 · 루프 BGM 5곡** | ✅ M6 |
 | **몬스터·캐릭터·타일 스프라이트** | ✅ M6 |
 | **온보딩 — 퀘스트 안내, 첫 방문 힌트** | ✅ M6 |
+| **지형별 전투 배경, 인카운터 플래시, 데미지 숫자** | ✅ |
+| **레벨업 스탯 상승 표시, 메시지 속도 설정** | ✅ |
 | 2.5D 리메이크 | ❌ M7 |
 
 ## 에셋은 전부 생성됩니다
@@ -93,10 +97,10 @@ $G --headless --path . --import
 $G --headless --path . --script res://tools/build_data.gd
 $G --headless --path . --import
 
-# 상시 검증 — 합계 1,108 checks
+# 상시 검증 — 합계 1,137 checks
 $G --headless --path . --script res://tools/validate_data.gd      # 649
 $G --headless --path . --script res://tools/test_core.gd          # 223
-$G --headless --path . --script res://tools/test_presentation.gd  # 220
+$G --headless --path . --script res://tools/test_presentation.gd  # 249
 $G --headless --path . --script res://tools/smoke_view.gd         #  16
 
 # 밸런스 리포트 → docs/07-BALANCE_REPORT.md

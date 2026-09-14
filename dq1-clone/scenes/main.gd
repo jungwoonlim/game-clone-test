@@ -4,8 +4,6 @@
 ## result at a pace a person can read.
 extends Node2D
 
-enum Mode { FIELD, BUSY }
-
 const DIRECTIONS := {
 	"ui_left": Vector2i.LEFT,
 	"ui_right": Vector2i.RIGHT,
@@ -26,9 +24,15 @@ const HP_BAR_WIDTH := 120.0
 @onready var _hp_fill: ColorRect = $UI/Battle/HpFill
 @onready var _hp_text: Label = $UI/Battle/HpText
 @onready var _detail: DetailWindow = $UI/Detail
+@onready var _backdrop: Control = $UI/Battle/Backdrop
+@onready var _flash_rect: ColorRect = $UI/Flash
 
 var _session: GameSession
-var _mode := Mode.FIELD
+## Several flows run as concurrent coroutines — the intro, a menu, a battle,
+## a death. Each used to hand control back with `_mode = FIELD`, so whichever
+## finished first unlocked the field while the others were still running. A
+## depth counter means control returns only when the last one is done.
+var _busy_depth := 0
 var _monster_name := ""
 var _monster_max_hp := 1
 var _monster_hp := 0
@@ -61,13 +65,26 @@ func _ready() -> void:
 ## Opening lines. Written so a first-time player knows where to go without
 ## being told anything outside the game.
 func _intro() -> void:
-	_mode = Mode.BUSY
+	_enter_busy()
 	if not _session.has_flag(&"hint_start"):
 		_session.set_flag(&"hint_start")
 		await _message.play("Thy quest begins in the castle town.")
 		await _message.play("Speak with the King upon the throne.")
 	await _message.play("ARROWS walk.   SPACE opens the menu.")
-	_mode = Mode.FIELD
+	_exit_busy()
+
+
+## True while any flow owns the screen: the intro, a menu, a battle, a death.
+func is_busy() -> bool:
+	return _busy_depth > 0
+
+
+func _enter_busy() -> void:
+	_busy_depth += 1
+
+
+func _exit_busy() -> void:
+	_busy_depth = maxi(0, _busy_depth - 1)
 
 
 func _sfx(name: String) -> void:
@@ -109,7 +126,7 @@ func _quest_line() -> String:
 
 
 func _process(_delta: float) -> void:
-	if _session == null or _mode != Mode.FIELD or _field.is_walking():
+	if _session == null or is_busy() or _field.is_walking():
 		return
 	for action in DIRECTIONS:
 		if Input.is_action_pressed(action):
@@ -139,7 +156,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	_message.request_skip()
 	_awaiting_key = false
 
-	if _mode == Mode.FIELD and not _field.is_walking() \
+	if not is_busy() and not _field.is_walking() \
 			and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER
 				or event.keycode == KEY_KP_ENTER or event.keycode == KEY_Z):
 		_open_field_menu()
@@ -148,7 +165,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- 필드 메뉴 ------------------------------------------------------------
 
 func _open_field_menu() -> void:
-	_mode = Mode.BUSY
+	_enter_busy()
 	var pick := await _command.open_menu(
 			["TALK", "TAKE", "STATUS", "SPELL", "ITEM", "EQUIP"])
 	match pick:
@@ -164,7 +181,7 @@ func _open_field_menu() -> void:
 			await _do_use_item()
 		5:
 			await _do_equip()
-	_mode = Mode.FIELD
+	_exit_busy()
 
 
 func _do_talk() -> void:
@@ -437,10 +454,12 @@ func _run_battle(monster_id: StringName) -> void:
 	if data == null:
 		return
 
-	_mode = Mode.BUSY
+	_enter_busy()
 	var is_boss_fight := data.is_boss
 	_sfx("sfx_boss" if is_boss_fight else "sfx_encounter")
+	await _encounter_transition()
 	_bgm("bgm_boss" if is_boss_fight else "bgm_battle")
+	_backdrop.set_terrain(_session.world.terrain_here())
 	_monster_name = data.display_name
 	_monster_max_hp = data.max_hp
 	_monster_hp = data.max_hp
@@ -457,22 +476,30 @@ func _run_battle(monster_id: StringName) -> void:
 		var command := await _ask_command()
 		if command.is_empty():
 			continue
-		await _play(_session.battle_command(command[0], command[1]))
+		var before := _stat_snapshot()
+		var events := _session.battle_command(command[0], command[1])
+		await _play(events)
+		await _report_level_gains(before, events)
 
+	var won_boss := false
 	if not _session.hero.is_alive():
 		await _handle_death()
 	else:
 		await _wait_for_key("")
 		if is_boss_fight:
+			won_boss = true
 			await _play_victory()
 
 	_battle.visible = false
 	_message.clear()
-	_bgm(_map_bgm())
+	# The victory theme has to survive the walk home; anything else and the
+	# dungeon loop stomps it a frame later.
+	if not won_boss:
+		_bgm(_map_bgm())
 	if _session.hero.is_alive() \
 			and float(_session.hero.hp) / float(maxi(_session.hero.max_hp, 1)) < 0.25:
 		await _message.play("Thou art gravely wounded. Seek an inn.")
-	_mode = Mode.FIELD
+	_exit_busy()
 
 
 ## Returns [command, argument], or [] when the player backed out and should be
@@ -535,49 +562,141 @@ func _ask_item() -> Array:
 
 
 ## Performs an already-resolved turn, one event at a time.
+##
+## "You attack!" and "Slime takes 4 damage." are two events but one sentence;
+## reading them as separate lines doubles the waiting for no information.
 func _play(events: Array[BattleEvent]) -> void:
-	for event in events:
+	var index := 0
+	while index < events.size():
+		var event := events[index]
 		_apply_effect(event)
 		var line := BattleText.describe(event, "You", _monster_name)
+
+		if index + 1 < events.size() and _merges(event, events[index + 1]):
+			var follow := events[index + 1]
+			var tail := BattleText.describe(follow, "You", _monster_name)
+			if line.length() + tail.length() <= 62:
+				_apply_effect(follow)
+				line = "%s  %s" % [line, tail]
+				index += 1
+
 		if line != "":
 			await _message.play(line)
 		_refresh_status()
+		index += 1
 
 
+func _merges(event: BattleEvent, next: BattleEvent) -> bool:
+	var opener := event.kind == BattleEvent.Kind.ATTACK \
+			or event.kind == BattleEvent.Kind.CRITICAL \
+			or event.kind == BattleEvent.Kind.SPELL_CAST
+	var result := next.kind == BattleEvent.Kind.DAMAGE \
+			or next.kind == BattleEvent.Kind.NO_DAMAGE \
+			or next.kind == BattleEvent.Kind.HEAL
+	return opener and result and event.by_hero == next.by_hero
+
+
+func _stat_snapshot() -> Dictionary:
+	var hero := _session.hero
+	return {
+		"STRENGTH": hero.strength, "AGILITY": hero.agility,
+		"MAX HP": hero.max_hp, "MAX MP": hero.max_mp,
+	}
+
+
+## "Level 5!" says nothing about what got better. This does.
+func _report_level_gains(before: Dictionary, events: Array[BattleEvent]) -> void:
+	var levelled := false
+	for event in events:
+		if event.kind == BattleEvent.Kind.LEVEL_UP:
+			levelled = true
+			break
+	if not levelled:
+		return
+
+	var after := _stat_snapshot()
+	var parts: Array[String] = []
+	for key in after:
+		var gain: int = int(after[key]) - int(before[key])
+		if gain > 0:
+			parts.append("%s +%d" % [key, gain])
+	if not parts.is_empty():
+		await _message.play("  ".join(parts))
+
+
+## One branch per kind. `match` stops at the first hit, so a duplicated case
+## further down is dead code — which is how the monster's self-heal stopped
+## showing on the HP bar and the defeat fade stopped playing.
 func _apply_effect(event: BattleEvent) -> void:
 	match event.kind:
 		BattleEvent.Kind.ATTACK:
 			_sfx("sfx_attack")
 		BattleEvent.Kind.CRITICAL:
 			_sfx("sfx_critical")
+			_flash(Color(1, 1, 1, 0.45), 0.14)
 		BattleEvent.Kind.SPELL_CAST:
 			_sfx("sfx_spell")
-		BattleEvent.Kind.HEAL:
-			_sfx("sfx_heal")
 		BattleEvent.Kind.LEVEL_UP:
 			_sfx("sfx_level_up")
 		BattleEvent.Kind.GOLD_GAINED:
 			_sfx("sfx_gold")
-		BattleEvent.Kind.MONSTER_DEFEATED:
-			_sfx("sfx_defeat_monster")
 		BattleEvent.Kind.HERO_DEFEATED:
 			_sfx("sfx_death")
+		BattleEvent.Kind.MONSTER_TRANSFORMED:
+			_sfx("sfx_boss")
+			_flash(Color(0.9, 0.3, 0.3, 0.6), 0.35)
+			_adopt_current_monster()
+		BattleEvent.Kind.MONSTER_DEFEATED:
+			_sfx("sfx_defeat_monster")
+			_portrait.play_defeat()
 		BattleEvent.Kind.DAMAGE:
 			if event.by_hero:
 				_monster_hp = maxi(0, _monster_hp - event.amount)
 				_portrait.play_hit()
+				_popup(str(event.amount), _monster_anchor(), Color(1, 0.86, 0.5))
 			else:
 				_sfx("sfx_hurt")
 				_shake_screen()
+				_popup(str(event.amount), _hero_anchor(), Color(1, 0.45, 0.45))
 		BattleEvent.Kind.HEAL:
-			if not event.by_hero:
+			_sfx("sfx_heal")
+			if event.by_hero:
+				_popup("+%d" % event.amount, _hero_anchor(), Color(0.55, 1.0, 0.65))
+			else:
 				_monster_hp = mini(_monster_max_hp, _monster_hp + event.amount)
-		BattleEvent.Kind.MONSTER_TRANSFORMED:
-			_sfx("sfx_boss")
-			_adopt_current_monster()
-		BattleEvent.Kind.MONSTER_DEFEATED:
-			_portrait.play_defeat()
+				_popup("+%d" % event.amount, _monster_anchor(), Color(0.55, 1.0, 0.65))
+		BattleEvent.Kind.ITEM_USED:
+			_popup("+%d" % event.amount, _hero_anchor(), Color(0.55, 1.0, 0.65))
 	_refresh_battle_hp()
+
+
+func _monster_anchor() -> Vector2:
+	return _portrait.position + _portrait.size * 0.5
+
+
+## The party has no sprite in battle, so their numbers land under the window
+## on the side the status box is on.
+func _hero_anchor() -> Vector2:
+	return Vector2(84, 236)
+
+
+func _popup(text: String, at: Vector2, color: Color) -> void:
+	if _battle.visible:
+		FloatingNumber.spawn(_battle, text, at, color)
+
+
+func _flash(color: Color, duration: float) -> void:
+	_flash_rect.color = color
+	_flash_rect.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_property(_flash_rect, "modulate:a", 0.0, duration)
+
+
+## Two quick blinks before the battle window drops in.
+func _encounter_transition() -> void:
+	for i in 2:
+		_flash(Color(1, 1, 1, 0.8), 0.09)
+		await get_tree().create_timer(0.11).timeout
 
 
 ## A boss's second form is a different monster: new name, new HP, new portrait.
@@ -633,14 +752,14 @@ func _wait_for_key(prompt: String) -> void:
 
 func _on_hero_died() -> void:
 	# Battle deaths are handled inside _run_battle; this is the swamp case.
-	if _mode == Mode.FIELD:
-		_mode = Mode.BUSY
+	if not is_busy():
 		_handle_death_on_field()
 
 
 func _handle_death_on_field() -> void:
+	_enter_busy()
 	await _handle_death()
-	_mode = Mode.FIELD
+	_exit_busy()
 
 
 func _on_map_changed(map_id: StringName, cell: Vector2i) -> void:

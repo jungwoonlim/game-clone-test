@@ -23,6 +23,7 @@ var _answers: Array = []
 ## cancelled, so during a fight this has to be a real choice or the flow spins.
 var _default_answer := -1
 var _menu_picks := 0
+var _saw_battle_panel := false
 var _gold_before := 0
 var _failures: Array[String] = []
 var _checks := 0
@@ -86,8 +87,10 @@ func _session() -> GameSession:
 	return _main.get("_session")
 
 
+## The game is back in the player's hands only when every concurrent flow —
+## intro, menu, battle, death — has finished.
 func _is_field() -> bool:
-	return int(_main.get("_mode")) == 0
+	return not bool(_main.call("is_busy"))
 
 
 func _advance(phase: Phase) -> void:
@@ -156,7 +159,9 @@ func _after_shop() -> void:
 
 
 func _after_equip() -> void:
-	_check(_session().hero.weapon_id == &"w_club", "the club never got equipped")
+	_check(_session().hero.weapon_id == &"w_club",
+			"the club never got equipped (weapon=%s bag=%s answers_left=%d)"
+			% [_session().hero.weapon_id, _session().hero.inventory, _answers.size()])
 	_check(not _session().hero.has_item(&"w_club"), "equipped gear is still in the bag")
 
 
@@ -190,9 +195,8 @@ func _leave_town() -> void:
 
 func _find_fight() -> void:
 	if not _is_field():
-		_check(_main.get("_battle").visible, "battle screen did not open")
-		# Set this BEFORE the next frame: the answerer runs first and would
-		# otherwise cancel a menu that cannot be cancelled.
+		# The encounter flash runs before the window appears, so the panel is
+		# checked over the whole fight rather than on this one frame.
 		_default_answer = 0  # always FIGHT
 		_advance(Phase.FIGHT)
 		return
@@ -208,7 +212,10 @@ func _find_fight() -> void:
 ## _default_answer is already 0 here, set by _find_fight before the answerer
 ## got a chance to cancel a menu that cannot be cancelled.
 func _fight() -> void:
+	if _main.get("_battle").visible:
+		_saw_battle_panel = true
 	if _is_field():
+		_check(_saw_battle_panel, "battle screen never opened")
 		_check(not _main.get("_battle").visible, "battle screen stayed open")
 		_session().db.map(&"field").encounter_rate = _saved_rate
 		_default_answer = -1
